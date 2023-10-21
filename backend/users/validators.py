@@ -2,7 +2,7 @@ import re
 from rest_framework.exceptions import ValidationError
 
 
-from backend.foodgram.settings import CONST
+from foodgram.settings import CONST
 
 
 def validate_username(value):
