@@ -9,18 +9,6 @@ from recipes.models import Recipe
 User = get_user_model()
 
 
-class CreateUserSerializer(serializers.ModelSerializer):
-    """Сериализатор создания пользователя User."""
-
-    class Meta:
-        model = User
-        fields = ('email',
-                  'username',
-                  'first_name',
-                  'last_name',
-                  'password')
-
-
 class UserSerializer(serializers.ModelSerializer):
     """Сериализатор создания пользователя User."""
 
