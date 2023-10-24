@@ -11,7 +11,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'token')
 
 DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1;localhost').split(';')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -123,19 +123,19 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 6,
 }
 
-DJOSER = {
-    'SERIALIZERS': {
-        'user_create': 'api.serializers.CreateUserSerializer',
-        'user': 'api.serializers.UserSerializer',
-        'current_user': 'api.serializers.UserSerializer',  # /api/users/me/
+# DJOSER = {
+#     'SERIALIZERS': {
+#         'user_create': 'api.serializers.CreateUserSerializer',
+#         'user': 'api.serializers.UserSerializer',
+#         'current_user': 'api.serializers.UserSerializer',  # /api/users/me/
 
-    },
-    'PERMISSIONS': {
-        'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly'],
-        'user_list': ['rest_framework.permissions.AllowAny'],
-    },
-    'HIDE_USERS': False,
-}
+#     },
+#     'PERMISSIONS': {
+#         'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly'],
+#         'user_list': ['rest_framework.permissions.AllowAny'],
+#     },
+#     'HIDE_USERS': False,
+# }
 
 CONST = {
     'max_legth_charfield': 150,

@@ -29,7 +29,7 @@ class Tag(models.Model):
         unique=True,
         verbose_name='Название'
     )
-    color = models.IntegerField(
+    color = models.CharField(
         null=True,
         max_length=CONST['max_legth_color'],
         unique=True,
@@ -72,6 +72,7 @@ class Recipe(BaseModel):
 
     author = models.ForeignKey(
         User,
+        null=True,
         on_delete=models.SET_NULL,
         verbose_name='Автор рецепта'
     )
@@ -82,7 +83,7 @@ class Recipe(BaseModel):
     ingredients = models.ManyToManyField(
         Ingredient,
         verbose_name='Ингридиенты',
-        through='IngredientRecipe'
+        through='recipes.IngredientRecipe'
     )
     image = models.ImageField(
         upload_to='recipes/images/'
@@ -104,7 +105,7 @@ class Recipe(BaseModel):
 
     class Meta:
         ordering = ('pub_date',)
-        default_related_name = 'recipe'
+        default_related_name = 'recipes'
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 
@@ -122,6 +123,7 @@ class IngredientRecipe(models.Model):
     )
     recipe = models.ForeignKey(
         Recipe,
+        verbose_name='Рецепты',
         related_name='ingredient',
         on_delete=models.CASCADE
     )
@@ -131,6 +133,7 @@ class IngredientRecipe(models.Model):
     )
 
     class Meta:
+        ordering = ('recipe',)
         constraints = [
             models.UniqueConstraint(
                 fields=['ingredient', 'recipe'],
@@ -161,7 +164,7 @@ class FavoriteRecipe(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['recipe', 'user'],
-                name='unique_user_recipe'
+                name='unique_user_recipe_in_favorites'
             )
         ]
 

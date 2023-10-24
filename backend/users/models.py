@@ -28,9 +28,9 @@ class User(AbstractUser):
         max_length=CONST['max_legth_charfield'],
         verbose_name='Пароль'
     )
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = [
-        'username',
+        'email',
         'first_name',
         'last_name',
         'password'
