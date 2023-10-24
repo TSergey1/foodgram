@@ -14,7 +14,8 @@ class User(AbstractUser):
         verbose_name='Юзернейм',
     )
     email = models.EmailField(
-        max_length=CONST['max_legth_email']
+        max_length=CONST['max_legth_email'],
+        unique=True
     )
     first_name = models.CharField(
         max_length=CONST['max_legth_charfield'],
@@ -28,9 +29,9 @@ class User(AbstractUser):
         max_length=CONST['max_legth_charfield'],
         verbose_name='Пароль'
     )
-    USERNAME_FIELD = 'username'
+    USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = [
-        'email',
+        'username',
         'first_name',
         'last_name',
         'password'
