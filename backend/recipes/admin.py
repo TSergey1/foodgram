@@ -1,29 +1,21 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-# from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.admin import UserAdmin
 
 from recipes.models import Ingredient, Recipe, Tag
 
 User = get_user_model()
 
 
-# admin.site.register(UserAdmin)
-
-# class UserAdmins(admin.ModelAdmin):
-#     list_display = (
-#         'username',
-#         'email',
-#         'first_name',
-#         'last_name',
-#     )
-#     list_editable = (
-#         'username',
-#         'email',
-#         'first_name',
-#         'last_name',
-#     )
-#     search_fields = ('username',)
-#     list_filter = ('username', 'email')
+@admin.register(User)
+class UserAdmins(UserAdmin):
+    list_display = (
+        'username',
+        'email',
+        'first_name',
+        'last_name'
+    )
+    list_filter = ('username', 'email')
 
 
 @admin.register(Ingredient)
@@ -42,8 +34,8 @@ class RecipeAdmin(admin.ModelAdmin):
         'name',
         'author',
     )
-    search_fields = ('name', 'author')
-    list_filter = ('name', 'tags__slug')
+    search_fields = ('name', 'author', 'tags__slug')
+    list_filter = ('name', 'author', 'tags__slug')
 
 
 @admin.register(Tag)

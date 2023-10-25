@@ -10,9 +10,9 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Сериализатор создания пользователя User."""
+    """Сериализатор пользователя User."""
 
-    is_subscribed = False
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -22,6 +22,13 @@ class UserSerializer(serializers.ModelSerializer):
                   'first_name',
                   'last_name',
                   'is_subscribed')
+
+    def get_is_subscribed(self, obj):
+        """Проверка подписки у пользователя."""
+        user = self.context['request'].user
+        if user.is_anonymous or user == obj:
+            return False
+        return user.follower.filter(following=obj).exists()
 
 
 class Base64ImageField(serializers.ImageField):
