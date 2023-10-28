@@ -7,6 +7,7 @@ from rest_framework import serializers
 from recipes.models import (Ingredient,
                             Recipe,
                             Tag)
+# from users.models import Follow
 
 User = get_user_model()
 
@@ -33,6 +34,33 @@ class UserSerializer(serializers.ModelSerializer):
         return user.follower.filter(following=obj).exists()
 
 
+class RecipesForUserSerializer(serializers.ModelSerializer):
+    """Сериализатор рецептов для сериализатора пользователя User."""
+
+    class Meta:
+        model = Recipe
+        fields = ('id',
+                  'name',
+                  'image',
+                  'cooking_time',)
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    """Сериализатор пользователя User."""
+
+    recipes = RecipesForUserSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = User
+        fields = ('email',
+                  'id',
+                  'username',
+                  'first_name',
+                  'last_name',
+                  'is_subscribed',
+                  'recipes')
+
+
 class TagSerializer(serializers.ModelSerializer):
     """Сериализатор тегов Tag."""
 
@@ -42,20 +70,73 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
-    """Сериализатор тегов Tag."""
+    """Сериализатор ингридиентов Ingredient."""
 
     class Meta:
         model = Ingredient
         fields = '__all__'
 
 
-# class Base64ImageField(serializers.ImageField):
-#     def to_internal_value(self, data):
-#         if isinstance(data, str) and data.startswith('data:image'):
-#             format, imgstr = data.split(';base64,')
-#             ext = format.split('/')[-1]
-#             data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-#         return super().to_internal_value(data)
+class Base64ImageField(serializers.ImageField):
+    """Конвертация base64."""
+
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith('data:image'):
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
+            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+        return super().to_internal_value(data)
+
+
+class ReadRecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор рецептов Recipe для GET запросов."""
+
+    tags = TagSerializer(many=True, read_only=True)
+    author = UserSerializer(read_only=True)
+    ingredients = IngredientSerializer(many=True, read_only=True)
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
+    image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = ('id',
+                  'tags',
+                  'author',
+                  'ingredients',
+                  'is_favorited',
+                  'is_in_shopping_cart',
+                  'name',
+                  'image',
+                  'text',
+                  'cooking_time')
+
+    def get_is_favorited(self, obj):
+        """Проверка рецепта в избранных у пользователя у пользователя."""
+        user = self.context['request'].user
+        if user.is_anonymous or user == obj:
+            return False
+        return user.favorites.filter(recipe=obj).exists()
+
+    def get_is_in_shopping_cart(self, obj):
+        """Проверка рецепта в покупках у пользователя у пользователя."""
+        user = self.context['request'].user
+        if user.is_anonymous or user == obj:
+            return False
+        return user.buy_user.filter(recipe=obj).exists()
+
+
+class RecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор рецептов Recipe для POST, PATCH запросов."""
+
+    class Meta:
+        model = Recipe
+        fields = ('ingredients',
+                  'tags',
+                  'image',
+                  'name',
+                  'text',
+                  'cooking_time')
 
 
 # class RecipeSerializer(serializers.ModelSerializer):
