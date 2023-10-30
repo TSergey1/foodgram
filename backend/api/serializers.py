@@ -46,7 +46,7 @@ class RecipesForUserSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
-    """Сериализатор пользователя User."""
+    """Сериализатор подписчиков User."""
 
     recipes = RecipesForUserSerializer(many=True, read_only=True)
 
@@ -67,6 +67,7 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = '__all__'
+        read_only_fields = ('__all__',)
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -75,6 +76,7 @@ class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = '__all__'
+        read_only_fields = ('__all__',)
 
 
 class Base64ImageField(serializers.ImageField):
@@ -88,10 +90,10 @@ class Base64ImageField(serializers.ImageField):
         return super().to_internal_value(data)
 
 
-class ReadRecipeSerializer(serializers.ModelSerializer):
+class RecipeSerializer(serializers.ModelSerializer):
     """Сериализатор рецептов Recipe для GET запросов."""
 
-    tags = TagSerializer(many=True, read_only=True)
+    tags = TagSerializer(many=True)
     author = UserSerializer(read_only=True)
     ingredients = IngredientSerializer(many=True, read_only=True)
     is_favorited = serializers.SerializerMethodField()
@@ -110,33 +112,38 @@ class ReadRecipeSerializer(serializers.ModelSerializer):
                   'image',
                   'text',
                   'cooking_time')
+        # read_only_fields = ('id',
+        #                     'is_favorited',
+        #                     'is_in_shopping_cart')
 
     def get_is_favorited(self, obj):
         """Проверка рецепта в избранных у пользователя у пользователя."""
         user = self.context['request'].user
-        if user.is_anonymous or user == obj:
+        if user.is_anonymous:
             return False
         return user.favorites.filter(recipe=obj).exists()
 
     def get_is_in_shopping_cart(self, obj):
         """Проверка рецепта в покупках у пользователя у пользователя."""
         user = self.context['request'].user
-        if user.is_anonymous or user == obj:
+        if user.is_anonymous:
             return False
         return user.buy_user.filter(recipe=obj).exists()
 
 
-class RecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор рецептов Recipe для POST, PATCH запросов."""
+# class RecipeSerializer(serializers.ModelSerializer):
+#     """Сериализатор рецептов Recipe для POST, PATCH запросов."""
 
-    class Meta:
-        model = Recipe
-        fields = ('ingredients',
-                  'tags',
-                  'image',
-                  'name',
-                  'text',
-                  'cooking_time')
+#     class Meta:
+#         model = Recipe
+#         fields = ('ingredients',
+#                   'tags',
+#                   'image',
+#                   'is_favorited',
+#                   'is_in_shopping_cart',
+#                   'name',
+#                   'text',
+#                   'cooking_time')
 
 
 # class RecipeSerializer(serializers.ModelSerializer):
