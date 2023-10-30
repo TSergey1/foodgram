@@ -45,7 +45,7 @@ class RecipesForUserSerializer(serializers.ModelSerializer):
                   'cooking_time',)
 
 
-class SubscriptionSerializer(serializers.ModelSerializer):
+class FollowSerializer(serializers.ModelSerializer):
     """Сериализатор подписчиков User."""
 
     recipes = RecipesForUserSerializer(many=True, read_only=True)
