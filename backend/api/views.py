@@ -31,29 +31,6 @@ class UserViewSet(views.UserViewSet):
         serializer = self.get_serializer(user)
         return Response(serializer.data, status.HTTP_200_OK)
 
-    # @action(methods=['post',],
-    #         detail=True,
-    #         url_path='subscribe',
-    #         permission_classes=(IsAuthenticated,),
-    #         serializer_class=SubscriptionSerializer)
-    # def subscribe(self, request):
-    #     user = request.user
-    #     user = User.objects.all()
-    #     serializer = self.get_serializer(data=request.data)
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-
-        # if request.method == 'DELETE':
-        #     instance = self.get_object()
-        #     self.perform_destroy(instance)
-        #     return Response(status=status.HTTP_204_NO_CONTENT)
-        # serializer = self.get_serializer(user)
-        # return Response(serializer.data, status.HTTP_200_OK)
-
 
 # class FollowViewSet(mixins.CreateModelMixin,
 #                     mixins.ListModelMixin,
