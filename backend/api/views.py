@@ -20,15 +20,13 @@ User = get_user_model()
 
 class UserViewSet(views.UserViewSet):
     """Вьюсет для обьектов класса User."""
-    serializer_class = UserSerializer
-    queryset = User.objects.all()
-    permission_classes = (AllowAny,)
 
     @action(detail=False,
             url_path='me',
             permission_classes=(IsAuthenticated,),
             serializer_class=UserSerializer)
     def me(self, request):
+        """Реализация для доступа только авторизованным пользователям."""
         user = request.user
         serializer = self.get_serializer(user)
         return Response(serializer.data, status.HTTP_200_OK)
