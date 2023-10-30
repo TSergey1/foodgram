@@ -37,13 +37,27 @@ class UserViewSet(views.UserViewSet):
         serializer = self.get_serializer(user)
         return Response(serializer.data, status.HTTP_200_OK)
 
+    @action(detail=True,
+            url_path='subscriptions',
+            permission_classes=(IsAuthenticated,),
+            serializer_class=FollowSerializer)
+    def subscriptions(self, request):
+        """
+        Реализация для доступа только авторизованным пользователям
+        к эндпоинту users/me/.
+        """
+        user = request.user
+        serializer = FollowSerializer(user)
+        return Response(serializer.data, status.HTTP_200_OK)
+
 
 class FollowViewSet(mixins.CreateModelMixin,
                     mixins.DestroyModelMixin,
                     viewsets.GenericViewSet):
     """ViewSet подписки"""
-    queryset = Follow.objects.all()
+    queryset = User.objects.all()
     serializer_class = FollowSerializer
+    permission_classes = (IsAuthenticated,)
     # filter_backends = (filters.SearchFilter,)
     # search_fields = ('following__username',)
 

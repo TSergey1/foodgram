@@ -7,7 +7,7 @@ from rest_framework import serializers
 from recipes.models import (Ingredient,
                             Recipe,
                             Tag)
-# from users.models import Follow
+from users.models import Follow
 
 User = get_user_model()
 
@@ -34,7 +34,7 @@ class UserSerializer(serializers.ModelSerializer):
         return user.follower.filter(following=obj).exists()
 
 
-class RecipesForUserSerializer(serializers.ModelSerializer):
+class RecipesForFollowSerializer(serializers.ModelSerializer):
     """Сериализатор рецептов для сериализатора пользователя User."""
 
     class Meta:
@@ -48,7 +48,9 @@ class RecipesForUserSerializer(serializers.ModelSerializer):
 class FollowSerializer(serializers.ModelSerializer):
     """Сериализатор подписчиков User."""
 
-    recipes = RecipesForUserSerializer(many=True, read_only=True)
+    recipes = RecipesForFollowSerializer(many=True, read_only=True)
+    is_subscribed = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -58,7 +60,16 @@ class FollowSerializer(serializers.ModelSerializer):
                   'first_name',
                   'last_name',
                   'is_subscribed',
-                  'recipes')
+                  'recipes',
+                  'recipes_count')
+
+    def get_is_subscribed(self, obj):
+        """Обозначение подписки пользователя."""
+        return True
+
+    def get_recipes_count(self, obj):
+        """Количество подписок у пользователя."""
+        return obj.recipes.count()
 
 
 class TagSerializer(serializers.ModelSerializer):
