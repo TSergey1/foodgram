@@ -4,7 +4,7 @@ from djoser import views
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from .permissions import IsAdminOrReadOnly
 from .serializers import (IngredientSerializer,
@@ -25,30 +25,38 @@ User = get_user_model()
 class UserViewSet(views.UserViewSet):
     """Вьюсет для обьектов класса User."""
 
-    @action(detail=False,
-            url_path='me',
-            permission_classes=(IsAuthenticated,),
-            serializer_class=UserSerializer)
-    def me(self, request):
+    def get_permissions(self):
+        """
+        Переопределяем get_permissions для доступа только авторизованным пользователям
+        к эндпоинту users/me/.
+        """
+        if self.action == 'me':
+            self.permission_classes = (IsAuthenticated,)
+        return super().get_permissions()
+
+    @action(detail=True,
+            url_path='subscriptions',
+            permission_classes=(IsAuthenticated,))
+    def subscriptions(self, request):
         """
         Реализация для доступа только авторизованным пользователям
-        к эндпоинту users/me/.
+        к эндпоинту users/subscriptions/
         """
         user = request.user
         serializer = self.get_serializer(user)
         return Response(serializer.data, status.HTTP_200_OK)
 
-    @action(detail=True,
-            url_path='subscriptions',
-            permission_classes=(IsAuthenticated,),
-            serializer_class=FollowSerializer)
-    def subscriptions(self, request):
+    @action(methods=['POST', 'DELETE'],
+            detail=False,
+            url_path='subscribe',
+            permission_classes=(IsAuthenticated,))
+    def subscribe(self, request, id):
         """
         Реализация для доступа только авторизованным пользователям
-        к эндпоинту users/me/.
+        к эндпоинту users/{id}/subscribe/
         """
         user = request.user
-        serializer = FollowSerializer(user)
+        serializer = self.get_serializer(user)
         return Response(serializer.data, status.HTTP_200_OK)
 
 
@@ -93,6 +101,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     filter_backends = (filters.SearchFilter,)
     search_fields = ('tags__slug',)
+    permission_classes = (AllowAny,)
 
     def perform_create(self, serializer):
         """Автоматически записываем автора."""

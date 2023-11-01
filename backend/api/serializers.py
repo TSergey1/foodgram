@@ -151,7 +151,7 @@ class RecipeGetSerializer(serializers.ModelSerializer):
 
 
 class IngredientRecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор IngredientRecipe."""
+    """Сериализатор для добавления ингредиента при создании рецепта."""
 
     id = serializers.IntegerField()
     amount = serializers.IntegerField()
@@ -163,7 +163,7 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
 
 
 class RecipeSetSerializer(serializers.ModelSerializer):
-    """Сериализатор рецептов Recipe для POST, PATCH запросов."""
+    """Сериализатор Recipe для POST, PATCH запросов."""
 
     tags = PrimaryKeyRelatedField(queryset=Tag.objects.all(),
                                   many=True)
@@ -181,18 +181,29 @@ class RecipeSetSerializer(serializers.ModelSerializer):
                   'text',
                   'cooking_time')
 
-    def create(self, validated_data):
-        ingredients = validated_data.pop('ingredients')
-        tags = validated_data.pop('tags')
-        recipe = Recipe.objects.create(**validated_data)
-        recipe.tags.set(tags)
+    def get_ingredient(self, recipe, ingredients):
         for ingredient in ingredients:
             ingredient_obj = Ingredient.objects.get(id=ingredient.get('id'))
             IngredientRecipe.objects.create(
                 ingredient=ingredient_obj,
                 recipe=recipe,
                 amount=ingredient.get('amount'))
+
+    def create(self, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        recipe = Recipe.objects.create(**validated_data)
+        recipe.tags.set(tags)
+        self.get_ingredient(recipe, ingredients)
         return recipe
+
+    def update(self, instance, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        IngredientRecipe.objects.filter(recipe=instance).delete()
+        instance.tags.set(tags)
+        self.get_ingredient(instance, ingredients)
+        return super().update(instance, validated_data)
 
     def to_representation(self, instance):
         request = self.context.get("request")
