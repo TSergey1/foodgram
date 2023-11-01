@@ -83,7 +83,7 @@ class Recipe(BaseModel):
     ingredients = models.ManyToManyField(
         Ingredient,
         verbose_name='Ингридиенты',
-        through='recipes.IngredientRecipe'
+        through='IngredientRecipe'
     )
     image = models.ImageField(
         upload_to='recipes/images/'
@@ -104,7 +104,7 @@ class Recipe(BaseModel):
     )
 
     class Meta:
-        ordering = ('pub_date',)
+        ordering = ('-pub_date',)
         default_related_name = 'recipes'
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'

@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from djoser import views
 
-from rest_framework import mixins, status, viewsets
+from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -9,7 +9,8 @@ from rest_framework.permissions import IsAuthenticated
 from .permissions import IsAdminOrReadOnly
 from .serializers import (IngredientSerializer,
                           FollowSerializer,
-                          RecipeSerializer,
+                          RecipeGetSerializer,
+                          RecipeSetSerializer,
                           TagSerializer,
                           UserSerializer)
 from recipes.models import (Ingredient,
@@ -90,13 +91,14 @@ class RecipesViewSet(viewsets.ModelViewSet):
     """Вьюсет для обьектов класса Recipe."""
 
     queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('tags__slug',)
 
     def perform_create(self, serializer):
-        """Создание отзыва, с проверкой на уникальнось в сериализаторе."""
+        """Автоматически записываем автора."""
         serializer.save(author=self.request.user)
 
-    # def get_serializer_class(self):
-    #     if self.action in ('list', 'retrieve'):
-    #         return ReadRecipeSerializer
-    #     return RecipeSerializer
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return RecipeGetSerializer
+        return RecipeSetSerializer
