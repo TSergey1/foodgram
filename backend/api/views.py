@@ -14,7 +14,8 @@ from .serializers import (IngredientSerializer,
                           RecipeSetSerializer,
                           RecipesShortSerializer,
                           TagSerializer,)
-from recipes.models import (Ingredient,
+from recipes.models import (BuyRecipe,
+                            Ingredient,
                             FavoriteRecipe,
                             Recipe,
                             Tag)
@@ -50,12 +51,12 @@ class UserViewSet(views.UserViewSet):
             detail=True,
             url_path='subscribe',
             permission_classes=(IsAuthenticated,))
-    def subscribe(self, request, id):
+    def subscribe(self, request, pk=None):
         """
         Реализация эндпоинта users/{id}/subscribe/
         """
         user = request.user
-        following = get_object_or_404(User, id=id)
+        following = get_object_or_404(User, pk=pk)
 
         if request.method == 'POST':
             serializer = FollowSerializer(following,
@@ -118,7 +119,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
             permission_classes=(IsAuthenticated,))
     def favorite(self, request, pk=None):
         """
-        Реализация эндпоинта users/{id}/favorite/
+        Реализация эндпоинта recipe/{id}/favorite/
         """
         user = request.user
         in_favorites = get_object_or_404(Recipe, pk=pk)
@@ -140,4 +141,35 @@ class RecipesViewSet(viewsets.ModelViewSet):
             favorites.delete()
             return Response(status.HTTP_204_NO_CONTENT)
         return Response({'errors': 'Этот рецепт не в избранных!'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['POST', 'DELETE'],
+            detail=True,
+            url_path='shopping_cart',
+            serializer_class=RecipesShortSerializer,
+            permission_classes=(IsAuthenticated,))
+    def shopping_cart(self, request, pk=None):
+        """
+        Реализация эндпоинта recipe/{id}/shopping_cart/
+        """
+        user = request.user
+        object_to_add = get_object_or_404(Recipe, pk=pk)
+
+        if request.method == 'POST':
+            serializer = RecipesShortSerializer(object_to_add,
+                                                context={'request': request})
+            if BuyRecipe.objects.filter(user=user,
+                                        recipe=object_to_add).exists():
+                return Response(
+                    {'errors': 'Рецепт уже в списке покупок!'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            BuyRecipe.objects.create(user=user, recipe=object_to_add)
+            return Response(serializer.data, status.HTTP_201_CREATED)
+        object_to_delete = BuyRecipe.objects.filter(user=user,
+                                                    recipe=object_to_add)
+        if object_to_delete.exists():
+            object_to_delete.delete()
+            return Response(status.HTTP_204_NO_CONTENT)
+        return Response({'errors': 'Этот рецепт не в списке покупок!'},
                         status=status.HTTP_400_BAD_REQUEST)
