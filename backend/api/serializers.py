@@ -10,7 +10,7 @@ from recipes.models import (Ingredient,
                             IngredientRecipe,
                             Recipe,
                             Tag)
-# from users.models import Follow
+from users.models import Follow
 
 User = get_user_model()
 
@@ -65,6 +65,7 @@ class FollowSerializer(serializers.ModelSerializer):
                   'is_subscribed',
                   'recipes',
                   'recipes_count')
+        read_only_fields = ('__all__',)
 
     def get_is_subscribed(self, obj):
         """Обозначение подписки пользователя."""
@@ -188,6 +189,15 @@ class RecipeSetSerializer(serializers.ModelSerializer):
                 ingredient=ingredient_obj,
                 recipe=recipe,
                 amount=ingredient.get('amount'))
+
+    def validate(self, data):
+        if not self.initial_data.get('ingredients'):
+            raise serializers.ValidationError(
+                'Должен быть хотя бы один ингридиент!')
+        elif not self.initial_data.get('tags'):
+            raise serializers.ValidationError(
+                'Должен быть хотя бы один тег!')
+        return data
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
