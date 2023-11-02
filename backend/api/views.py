@@ -48,7 +48,6 @@ class UserViewSet(views.UserViewSet):
         serializer = FollowSerializer(folowing, many=True)
         return Response(serializer.data, status.HTTP_200_OK)
 
-
     @action(methods=['POST', 'DELETE'],
             detail=True,
             url_path='subscribe',
@@ -63,10 +62,10 @@ class UserViewSet(views.UserViewSet):
         serializer = FollowSerializer(following,
                                       context={'request': request})
         if user == following:
-            return Response({'errors':'Нельзя подписаться на самого себя!'},
+            return Response({'errors': 'Нельзя подписаться на самого себя!'},
                             status=status.HTTP_400_BAD_REQUEST)
         if Follow.objects.filter(user=user, following=following).exists():
-            return Response({'errors':'Вы уже подписаны на этого автора!'},
+            return Response({'errors': 'Вы уже подписаны на этого автора!'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         Follow.objects.create(user=request.user, following=following)

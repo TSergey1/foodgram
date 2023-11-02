@@ -10,7 +10,6 @@ from recipes.models import (Ingredient,
                             IngredientRecipe,
                             Recipe,
                             Tag)
-from users.models import Follow
 
 User = get_user_model()
 
