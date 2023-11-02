@@ -39,10 +39,7 @@ class UserViewSet(views.UserViewSet):
             url_path='subscriptions',
             permission_classes=(IsAuthenticated,))
     def subscriptions(self, request):
-        """
-        Реализация для доступа только авторизованным пользователям
-        к эндпоинту users/subscriptions/
-        """
+        """Реализация эндпоинта users/subscriptions/ю"""
         user = request.user
         folowing = User.objects.filter(following__user=user)
         serializer = FollowSerializer(folowing, many=True)
@@ -54,39 +51,28 @@ class UserViewSet(views.UserViewSet):
             permission_classes=(IsAuthenticated,))
     def subscribe(self, request, id):
         """
-        Реализация для доступа только авторизованным пользователям
-        к эндпоинту users/{id}/subscribe/
+        Реализация эндпоинта users/{id}/subscribe/
         """
         user = request.user
         following = get_object_or_404(User, id=id)
-        serializer = FollowSerializer(following,
-                                      context={'request': request})
-        if user == following:
-            return Response({'errors': 'Нельзя подписаться на самого себя!'},
-                            status=status.HTTP_400_BAD_REQUEST)
-        if Follow.objects.filter(user=user, following=following).exists():
-            return Response({'errors': 'Вы уже подписаны на этого автора!'},
-                            status=status.HTTP_400_BAD_REQUEST)
 
-        Follow.objects.create(user=request.user, following=following)
-        return Response(serializer.data, status.HTTP_201_CREATED)
-
-
-# class FollowViewSet(mixins.CreateModelMixin,
-#                     mixins.DestroyModelMixin,
-#                     viewsets.GenericViewSet):
-#     """ViewSet подписки"""
-#     queryset = User.objects.all()
-#     serializer_class = FollowSerializer
-#     permission_classes = (IsAuthenticated,)
-#     # filter_backends = (filters.SearchFilter,)
-#     # search_fields = ('following__username',)
-
-#     def get_queryset(self):
-#         return self.request.user.follower
-
-#     def perform_create(self, serializer):
-#         serializer.save(user=self.request.user)
+        if request.method == 'POST':
+            serializer = FollowSerializer(following,
+                                          context={'request': request})
+            if user == following:
+                return Response({'errors': 'Нельзя подписаться на себя!'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            if Follow.objects.filter(user=user, following=following).exists():
+                return Response({'errors': 'Вы уже подписаны на автора!'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            Follow.objects.create(user=user, following=following)
+            return Response(serializer.data, status.HTTP_201_CREATED)
+        follower = Follow.objects.filter(user=user, following=following)
+        if follower.exists():
+            follower.delete()
+            return Response(status.HTTP_204_NO_CONTENT)
+        return Response({'errors': 'Вы не подписаны на автора!'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
