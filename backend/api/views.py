@@ -12,8 +12,10 @@ from .serializers import (IngredientSerializer,
                           FollowSerializer,
                           RecipeGetSerializer,
                           RecipeSetSerializer,
+                          RecipesShortSerializer,
                           TagSerializer,)
 from recipes.models import (Ingredient,
+                            FavoriteRecipe,
                             Recipe,
                             Tag)
 from users.models import Follow
@@ -34,8 +36,7 @@ class UserViewSet(views.UserViewSet):
             self.permission_classes = (IsAuthenticated,)
         return super().get_permissions()
 
-    @action(methods=['GET',],
-            detail=False,
+    @action(detail=False,
             url_path='subscriptions',
             permission_classes=(IsAuthenticated,))
     def subscriptions(self, request):
@@ -109,3 +110,34 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if self.action in ('list', 'retrieve'):
             return RecipeGetSerializer
         return RecipeSetSerializer
+
+    @action(methods=['POST', 'DELETE'],
+            detail=True,
+            url_path='favorite',
+            serializer_class=RecipesShortSerializer,
+            permission_classes=(IsAuthenticated,))
+    def favorite(self, request, pk=None):
+        """
+        Реализация эндпоинта users/{id}/favorite/
+        """
+        user = request.user
+        in_favorites = get_object_or_404(Recipe, pk=pk)
+
+        if request.method == 'POST':
+            serializer = RecipesShortSerializer(in_favorites,
+                                                context={'request': request})
+            if FavoriteRecipe.objects.filter(user=user,
+                                             recipe=in_favorites).exists():
+                return Response(
+                    {'errors': 'Рецепт уже в избранных!'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            FavoriteRecipe.objects.create(user=user, recipe=in_favorites)
+            return Response(serializer.data, status.HTTP_201_CREATED)
+        favorites = FavoriteRecipe.objects.filter(user=user,
+                                                  recipe=in_favorites)
+        if favorites.exists():
+            favorites.delete()
+            return Response(status.HTTP_204_NO_CONTENT)
+        return Response({'errors': 'Этот рецепт не в избранных!'},
+                        status=status.HTTP_400_BAD_REQUEST)

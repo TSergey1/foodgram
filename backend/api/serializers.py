@@ -36,8 +36,8 @@ class UserSerializer(serializers.ModelSerializer):
         return user.follower.filter(following=obj).exists()
 
 
-class RecipesForFollowSerializer(serializers.ModelSerializer):
-    """Сериализатор рецептов для сериализатора пользователя User."""
+class RecipesShortSerializer(serializers.ModelSerializer):
+    """Сериализатор рецептов короткий."""
 
     class Meta:
         model = Recipe
@@ -45,12 +45,13 @@ class RecipesForFollowSerializer(serializers.ModelSerializer):
                   'name',
                   'image',
                   'cooking_time',)
+        read_only_fields = ('__all__',)
 
 
 class FollowSerializer(serializers.ModelSerializer):
     """Сериализатор подписчиков User."""
 
-    recipes = RecipesForFollowSerializer(many=True, read_only=True)
+    recipes = RecipesShortSerializer(many=True, read_only=True)
     is_subscribed = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
 
