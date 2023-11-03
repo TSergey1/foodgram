@@ -1,13 +1,17 @@
+import aspose.pdf as ap
 from django.contrib.auth import get_user_model
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser import views
 
-from rest_framework import filters, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 
-from .permissions import IsAdminOrReadOnly
+from .filters import RecipeFilters
+from .permissions import (IsAdminOrReadOnly,
+                          IsAuthorOrAdminOrReadOnly)
 from .serializers import (IngredientSerializer,
                           FollowSerializer,
                           RecipeGetSerializer,
@@ -16,6 +20,7 @@ from .serializers import (IngredientSerializer,
                           TagSerializer,)
 from recipes.models import (BuyRecipe,
                             Ingredient,
+                            IngredientRecipe,
                             FavoriteRecipe,
                             Recipe,
                             Tag)
@@ -23,6 +28,16 @@ from users.models import Follow
 
 
 User = get_user_model()
+
+DICT_ERRORS = {
+    'subscribe_to_myself': 'Нельзя подписаться на себя!',
+    're-subscription': 'Вы уже подписаны на автора!',
+    'not_subscription': 'Вы не подписаны на автора!',
+    're-favorite': 'Рецепт уже в избранных!',
+    'not_favorite': 'Этот рецепт не в избранных!',
+    're-buy_recipe': 'Рецепт уже в списке покупок!',
+    'not_buy_recipe': 'Этот рецепт не в списке покупок!',
+}
 
 
 class UserViewSet(views.UserViewSet):
@@ -49,7 +64,6 @@ class UserViewSet(views.UserViewSet):
 
     @action(methods=['POST', 'DELETE'],
             detail=True,
-            url_path='subscribe',
             permission_classes=(IsAuthenticated,))
     def subscribe(self, request, pk=None):
         """
@@ -62,19 +76,27 @@ class UserViewSet(views.UserViewSet):
             serializer = FollowSerializer(following,
                                           context={'request': request})
             if user == following:
-                return Response({'errors': 'Нельзя подписаться на себя!'},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'errors': '{0}'.format(
+                        DICT_ERRORS['subscribe_to_myself']
+                    )},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             if Follow.objects.filter(user=user, following=following).exists():
-                return Response({'errors': 'Вы уже подписаны на автора!'},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'errors': '{0}'.format(DICT_ERRORS['re-subscription'])},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             Follow.objects.create(user=user, following=following)
             return Response(serializer.data, status.HTTP_201_CREATED)
         follower = Follow.objects.filter(user=user, following=following)
         if follower.exists():
             follower.delete()
             return Response(status.HTTP_204_NO_CONTENT)
-        return Response({'errors': 'Вы не подписаны на автора!'},
-                        status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {'errors': '{0}'.format(DICT_ERRORS['re-subscription'])},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -99,9 +121,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
     """Вьюсет для обьектов класса Recipe."""
 
     queryset = Recipe.objects.all()
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('tags__slug',)
-    permission_classes = (AllowAny,)
+    filterset_class = RecipeFilters
+    permission_classes = (IsAuthorOrAdminOrReadOnly,)
 
     def perform_create(self, serializer):
         """Автоматически записываем автора."""
@@ -114,8 +135,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     @action(methods=['POST', 'DELETE'],
             detail=True,
-            url_path='favorite',
-            serializer_class=RecipesShortSerializer,
             permission_classes=(IsAuthenticated,))
     def favorite(self, request, pk=None):
         """
@@ -130,7 +149,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
             if FavoriteRecipe.objects.filter(user=user,
                                              recipe=in_favorites).exists():
                 return Response(
-                    {'errors': 'Рецепт уже в избранных!'},
+                    {'errors': '{0}'.format(DICT_ERRORS['re-favorite'])},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             FavoriteRecipe.objects.create(user=user, recipe=in_favorites)
@@ -140,36 +159,70 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if favorites.exists():
             favorites.delete()
             return Response(status.HTTP_204_NO_CONTENT)
-        return Response({'errors': 'Этот рецепт не в избранных!'},
+        return Response({'errors': '{0}'.format(DICT_ERRORS['not_favorite'])},
                         status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['POST', 'DELETE'],
             detail=True,
-            url_path='shopping_cart',
-            serializer_class=RecipesShortSerializer,
             permission_classes=(IsAuthenticated,))
     def shopping_cart(self, request, pk=None):
         """
         Реализация эндпоинта recipe/{id}/shopping_cart/
         """
         user = request.user
-        object_to_add = get_object_or_404(Recipe, pk=pk)
+        add_obj = get_object_or_404(Recipe, pk=pk)
 
         if request.method == 'POST':
-            serializer = RecipesShortSerializer(object_to_add,
+            serializer = RecipesShortSerializer(add_obj,
                                                 context={'request': request})
             if BuyRecipe.objects.filter(user=user,
-                                        recipe=object_to_add).exists():
+                                        recipe=add_obj).exists():
                 return Response(
-                    {'errors': 'Рецепт уже в списке покупок!'},
+                    {'errors': '{0}'.format(DICT_ERRORS['re-buy_recipe'])},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            BuyRecipe.objects.create(user=user, recipe=object_to_add)
+            BuyRecipe.objects.create(user=user, recipe=add_obj)
             return Response(serializer.data, status.HTTP_201_CREATED)
         object_to_delete = BuyRecipe.objects.filter(user=user,
-                                                    recipe=object_to_add)
+                                                    recipe=add_obj)
         if object_to_delete.exists():
             object_to_delete.delete()
             return Response(status.HTTP_204_NO_CONTENT)
-        return Response({'errors': 'Этот рецепт не в списке покупок!'},
+        return Response({'errors': '{0}'.format(DICT_ERRORS['not_buy_recipe'])},
                         status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False,
+            permission_classes=(IsAuthenticated,))
+    def download_shopping_cart(self, request):
+        """
+        Реализация скачивание списка ингридиентов
+        """
+        download_dict = {}
+        qw_st = IngredientRecipe.objects.filter(
+            recipe__buy_recipe__user=request.user
+        ).values_list(
+            'ingredient__name',
+            'amount',
+            'ingredient__measurement_unit', )
+        print(qw_st)
+        for name, amount, measurement_unit in qw_st:
+            if name in download_dict:
+                download_dict[name][0] = download_dict[name][0] + amount
+            else:
+                download_dict[name] = [amount, measurement_unit]
+
+        list_ingredient = ap.Document()
+        page = list_ingredient.pages.add()
+        for key, value in download_dict.items():
+            text_fragment = (
+                ap.text.TextFragment(f'{key} {value[0]} {value[1]}')
+            )
+            page.paragraphs.add(text_fragment)
+        list_ingredient.save('list_ingredient.pdf')
+        response = HttpResponse(
+            list_ingredient,
+            content_type='application/pdf'
+        )
+        response['Content-Disposition'] = ('attachment; '
+                                           'filename="list_ingredient.pdf"')
+        return response
