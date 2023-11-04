@@ -188,8 +188,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if object_to_delete.exists():
             object_to_delete.delete()
             return Response(status.HTTP_204_NO_CONTENT)
-        return Response({'errors': '{0}'.format(DICT_ERRORS['not_buy_recipe'])},
-                        status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {'errors': '{0}'.format(DICT_ERRORS['not_buy_recipe'])},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     @action(detail=False,
             permission_classes=(IsAuthenticated,))

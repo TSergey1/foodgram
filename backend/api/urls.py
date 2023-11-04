@@ -8,11 +8,6 @@ from .views import (IngredientViewSet,
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
-# router.register(
-#     r'users/(?P<user_id>\d+)/subscribe',
-#     FollowViewSet,
-#     basename='subscribe'
-# )
 router.register(r'tags', TagViewSet)
 router.register(r'ingredients', IngredientViewSet)
 router.register(r'recipes', RecipesViewSet)
