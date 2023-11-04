@@ -8,7 +8,7 @@ class Command(BaseCommand):
     BASE_DIR / data."""
     def handle(self, *args, **options):
 
-        with open('/app/data.ingredient.json', 'rb') as f:
+        with open('../data/ingredient.json', 'rb') as f:
             data = json.load(f)
 
             for i in data:
