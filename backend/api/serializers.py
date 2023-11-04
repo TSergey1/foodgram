@@ -5,11 +5,7 @@ from django.core.files.base import ContentFile
 from django.db.models import F
 from rest_framework import serializers
 from rest_framework.relations import PrimaryKeyRelatedField
-
-from recipes.models import (Ingredient,
-                            IngredientRecipe,
-                            Recipe,
-                            Tag)
+from recipes.models import Ingredient, IngredientRecipe, Recipe, Tag
 
 User = get_user_model()
 

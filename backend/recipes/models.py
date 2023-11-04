@@ -4,7 +4,6 @@ from django.db import models
 
 from foodgram.settings import CONST
 
-
 User = get_user_model()
 
 
