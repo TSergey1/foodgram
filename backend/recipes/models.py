@@ -112,6 +112,11 @@ class Recipe(BaseModel):
     def __str__(self):
         return self.name
 
+    def clean(self):
+        self.name = self.name.lower()
+        self.measurement_unit = self.measurement_unit.lower()
+        super().clean()
+
 
 class IngredientRecipe(models.Model):
     """Связующая модель ингридиента и рецепта."""
