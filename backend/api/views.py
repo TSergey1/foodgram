@@ -2,6 +2,7 @@
 # import mimetypes
 # from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser import views
@@ -210,12 +211,12 @@ class RecipesViewSet(viewsets.ModelViewSet):
         Реализация скачивание списка ингридиентов
         """
         # download_dict = {}
-        qw_st = IngredientRecipe.objects.filter(
-            recipe__buy_recipe__user=request.user
-        ).values_list(
-            'ingredient__name',
-            'amount',
-            'ingredient__measurement_unit', )
+        # qw_st = IngredientRecipe.objects.filter(
+        #     recipe__buy_recipe__user=request.user
+        # ).values_list(
+        #     'ingredient__name',
+        #     'amount',
+        #     'ingredient__measurement_unit', )
         # for name, amount, measurement_unit in qw_st:
         #     if name in download_dict:
         #         download_dict[name][0] = download_dict[name][0] + amount
@@ -247,15 +248,34 @@ class RecipesViewSet(viewsets.ModelViewSet):
         # )
         # response['Content-Disposition'] = ('attachment; '
         #                                    'filename="list_ingredient.pdf"')
+        # ingredient_list = "Cписок покупок:"
+        # for num, i in enumerate(qw_st):
+        #     ingredient_list += (
+        #         f"\n{i['ingredient__name']} - "
+        #         f"{i['amount']} {i['ingredient__measurement_unit']}"
+        #     )
+        #     if num < qw_st.count() - 1:
+        #         ingredient_list += ', '
+        # file = 'shopping_list'
+        # response = HttpResponse(qw_st, 'Content-Type: application/pdf')
+        # response['Content-Disposition'] = f'attachment; filename="{file}.pdf"'
+        # return response
+
+    def download_shopping_cart(request):
         ingredient_list = "Cписок покупок:"
-        for num, i in enumerate(qw_st):
+        ingredients = IngredientRecipe.objects.filter(
+            recipe__shopping_cart__user=request.user
+        ).values(
+            'ingredient__name', 'ingredient__measurement_unit'
+        ).annotate(amount=Sum('amount'))
+        for num, i in enumerate(ingredients):
             ingredient_list += (
                 f"\n{i['ingredient__name']} - "
                 f"{i['amount']} {i['ingredient__measurement_unit']}"
             )
-            if num < qw_st.count() - 1:
+            if num < ingredients.count() - 1:
                 ingredient_list += ', '
         file = 'shopping_list'
-        response = HttpResponse(qw_st, 'Content-Type: application/pdf')
+        response = HttpResponse(ingredient_list, 'Content-Type: application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{file}.pdf"'
         return response
