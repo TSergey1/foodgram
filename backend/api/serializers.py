@@ -6,10 +6,12 @@ from django.db.models import F
 from rest_framework import serializers
 from rest_framework.relations import PrimaryKeyRelatedField
 
-from recipes.models import Ingredient, IngredientRecipe, Recipe, Tag
+from recipes.models import (Ingredient,
+                            IngredientRecipe,
+                            Recipe,
+                            Tag)
 
 User = get_user_model()
-
 
 class UserSerializer(serializers.ModelSerializer):
     """Сериализатор пользователя User."""
@@ -191,6 +193,7 @@ class RecipeSetSerializer(serializers.ModelSerializer):
         if not self.initial_data.get('ingredients'):
             raise serializers.ValidationError(
                 'Должен быть хотя бы один ингридиент!')
+        
         elif not self.initial_data.get('tags'):
             raise serializers.ValidationError(
                 'Должен быть хотя бы один тег!')

@@ -3,12 +3,13 @@ from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser import views
+
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
-from .filters import RecipeFilters
+from .filters import IngredientFilter, RecipeFilters
 from .paginators import PageLimitPagination
 from .permissions import (IsAdminOrReadOnly,
                           IsAuthorOrAdminOrReadOnly)
@@ -69,7 +70,7 @@ class UserViewSet(views.UserViewSet):
     @action(methods=['POST', 'DELETE'],
             detail=True,
             permission_classes=(IsAuthenticated,))
-    def subscribe(self, request, id=None):
+    def subscribe(self, request, id):
         """
         Реализация эндпоинта users/{id}/subscribe/
         """
@@ -117,6 +118,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    filter_backends = (IngredientFilter,)
     pagination_class = None
     permission_classes = (IsAdminOrReadOnly,)
 
@@ -141,12 +143,12 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(methods=['POST', 'DELETE'],
             detail=True,
             permission_classes=(IsAuthenticated,))
-    def favorite(self, request, id=None):
+    def favorite(self, request, pk):
         """
         Реализация эндпоинта recipe/{id}/favorite/
         """
         user = request.user
-        in_favorites = get_object_or_404(Recipe, pk=id)
+        in_favorites = get_object_or_404(Recipe, pk=pk)
 
         if request.method == 'POST':
             serializer = RecipesShortSerializer(in_favorites,
@@ -170,12 +172,12 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(methods=['POST', 'DELETE'],
             detail=True,
             permission_classes=(IsAuthenticated,))
-    def shopping_cart(self, request, id=None):
+    def shopping_cart(self, request, pk):
         """
         Реализация эндпоинта recipe/{id}/shopping_cart/
         """
         user = request.user
-        add_obj = get_object_or_404(Recipe, pk=id)
+        add_obj = get_object_or_404(Recipe, pk=pk)
 
         if request.method == 'POST':
             serializer = RecipesShortSerializer(add_obj,
@@ -195,7 +197,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return Response(status.HTTP_204_NO_CONTENT)
         return Response(
             {'errors': '{0}'.format(DICT_ERRORS['not_buy_recipe'])},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST        
         )
 
     @action(detail=False,
