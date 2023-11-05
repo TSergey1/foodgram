@@ -1,6 +1,6 @@
-import aspose.pdf as ap
-import mimetypes
-from django.conf import settings
+# import aspose.pdf as ap
+# import mimetypes
+# from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -235,8 +235,12 @@ class RecipesViewSet(viewsets.ModelViewSet):
         # filepath = settings.BASE_DIR + '/filedownload/Files/' + filename
         # mime_type, _ = mimetypes.guess_type(filepath)
         # path = open(filepath, 'r')
-        # response = HttpResponse(list_ingredient, content_type='application/pdf')
-        # response['Content-Disposition'] = "attachment; filename=%s" % filename
+        # response = HttpResponse(
+        #     list_ingredient,
+        #     content_type='application/pdf'
+        # )
+        # response['Content-Disposition'] = "attachment;
+        #  filename=%s" % filename
         # # response = HttpResponse(
         #     list_ingredient,
         #     content_type='application/pdf'
