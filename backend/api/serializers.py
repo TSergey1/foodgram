@@ -6,8 +6,10 @@ from django.db.models import F
 from rest_framework import serializers
 from rest_framework.relations import PrimaryKeyRelatedField
 
-from recipes.models import (Ingredient,
+from recipes.models import (BuyRecipe,
+                            Ingredient,
                             IngredientRecipe,
+                            FavoriteRecipe,
                             Recipe,
                             Tag)
 
@@ -141,14 +143,18 @@ class RecipeGetSerializer(serializers.ModelSerializer):
         user = self.context.get('request').user
         if user.is_anonymous:
             return False
-        return user.favorites.filter(recipe=obj).exists()
+        return FavoriteRecipe.objects.filter(
+            user=user, recipe=obj
+        ).exists()
 
     def get_is_in_shopping_cart(self, obj):
         """Проверка рецепта в покупках у пользователя."""
         user = self.context.get('request').user
         if user.is_anonymous:
             return False
-        return user.buy_user.filter(recipe=obj).exists()
+        return BuyRecipe.objects.filter(
+            user=user, recipe=obj
+        ).exists()
 
 
 class IngredientRecipeSerializer(serializers.ModelSerializer):

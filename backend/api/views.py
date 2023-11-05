@@ -2,7 +2,7 @@ import aspose.pdf as ap
 import mimetypes
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.http.response import HttpResponse
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser import views
 
@@ -209,38 +209,49 @@ class RecipesViewSet(viewsets.ModelViewSet):
         """
         Реализация скачивание списка ингридиентов
         """
-        download_dict = {}
+        # download_dict = {}
         qw_st = IngredientRecipe.objects.filter(
             recipe__buy_recipe__user=request.user
         ).values_list(
             'ingredient__name',
             'amount',
             'ingredient__measurement_unit', )
-        for name, amount, measurement_unit in qw_st:
-            if name in download_dict:
-                download_dict[name][0] = download_dict[name][0] + amount
-            else:
-                download_dict[name] = [amount, measurement_unit]
+        # for name, amount, measurement_unit in qw_st:
+        #     if name in download_dict:
+        #         download_dict[name][0] = download_dict[name][0] + amount
+        #     else:
+        #         download_dict[name] = [amount, measurement_unit]
 
-        list_ingredient = ap.Document()
-        page = list_ingredient.pages.add()
-        for key, value in download_dict.items():
-            text_fragment = (
-                ap.text.TextFragment(f'{key} {value[0]} {value[1]}')
-            )
-            page.paragraphs.add(text_fragment)
-        list_ingredient.save('list_ingredient.pdf')
+        # list_ingredient = ap.Document()
+        # page = list_ingredient.pages.add()
+        # for key, value in download_dict.items():
+        #     text_fragment = (
+        #         ap.text.TextFragment(f'{key} {value[0]} {value[1]}')
+        #     )
+        #     page.paragraphs.add(text_fragment)
+        # list_ingredient.save('list_ingredient.pdf')
 
-        filename = 'list_ingredient.pdf'
-        filepath = settings.BASE_DIR + '/filedownload/Files/' + filename
-        mime_type, _ = mimetypes.guess_type(filepath)
-        path = open(filepath, 'r')
-        response = HttpResponse(path, content_type=mime_type)
-        response['Content-Disposition'] = "attachment; filename=%s" % filename
-        # response = HttpResponse(
+        # filename = 'list_ingredient.pdf'
+        # filepath = settings.BASE_DIR + '/filedownload/Files/' + filename
+        # mime_type, _ = mimetypes.guess_type(filepath)
+        # path = open(filepath, 'r')
+        # response = HttpResponse(list_ingredient, content_type='application/pdf')
+        # response['Content-Disposition'] = "attachment; filename=%s" % filename
+        # # response = HttpResponse(
         #     list_ingredient,
         #     content_type='application/pdf'
         # )
         # response['Content-Disposition'] = ('attachment; '
         #                                    'filename="list_ingredient.pdf"')
+        ingredient_list = "Cписок покупок:"
+        for num, i in enumerate(qw_st):
+            ingredient_list += (
+                f"\n{i['ingredient__name']} - "
+                f"{i['amount']} {i['ingredient__measurement_unit']}"
+            )
+            if num < qw_st.count() - 1:
+                ingredient_list += ', '
+        file = 'shopping_list'
+        response = HttpResponse(qw_st, 'Content-Type: application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{file}.pdf"'
         return response
