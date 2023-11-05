@@ -1,6 +1,3 @@
-# import aspose.pdf as ap
-# import mimetypes
-# from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
@@ -123,6 +120,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     filter_backends = (IngredientFilter,)
+    search_fields = ('^name', )
     pagination_class = None
     permission_classes = (IsAdminOrReadOnly,)
 
@@ -210,72 +208,22 @@ class RecipesViewSet(viewsets.ModelViewSet):
         """
         Реализация скачивание списка ингридиентов
         """
-        # download_dict = {}
-        # qw_st = IngredientRecipe.objects.filter(
-        #     recipe__buy_recipe__user=request.user
-        # ).values_list(
-        #     'ingredient__name',
-        #     'amount',
-        #     'ingredient__measurement_unit', )
-        # for name, amount, measurement_unit in qw_st:
-        #     if name in download_dict:
-        #         download_dict[name][0] = download_dict[name][0] + amount
-        #     else:
-        #         download_dict[name] = [amount, measurement_unit]
-
-        # list_ingredient = ap.Document()
-        # page = list_ingredient.pages.add()
-        # for key, value in download_dict.items():
-        #     text_fragment = (
-        #         ap.text.TextFragment(f'{key} {value[0]} {value[1]}')
-        #     )
-        #     page.paragraphs.add(text_fragment)
-        # list_ingredient.save('list_ingredient.pdf')
-
-        # filename = 'list_ingredient.pdf'
-        # filepath = settings.BASE_DIR + '/filedownload/Files/' + filename
-        # mime_type, _ = mimetypes.guess_type(filepath)
-        # path = open(filepath, 'r')
-        # response = HttpResponse(
-        #     list_ingredient,
-        #     content_type='application/pdf'
-        # )
-        # response['Content-Disposition'] = "attachment;
-        #  filename=%s" % filename
-        # # response = HttpResponse(
-        #     list_ingredient,
-        #     content_type='application/pdf'
-        # )
-        # response['Content-Disposition'] = ('attachment; '
-        #                                    'filename="list_ingredient.pdf"')
-        # ingredient_list = "Cписок покупок:"
-        # for num, i in enumerate(qw_st):
-        #     ingredient_list += (
-        #         f"\n{i['ingredient__name']} - "
-        #         f"{i['amount']} {i['ingredient__measurement_unit']}"
-        #     )
-        #     if num < qw_st.count() - 1:
-        #         ingredient_list += ', '
-        # file = 'shopping_list'
-        # response = HttpResponse(qw_st, 'Content-Type: application/pdf')
-        # response['Content-Disposition'] = f'attachment; filename="{file}.pdf"'
-        # return response
-
-    def download_shopping_cart(request):
-        ingredient_list = "Cписок покупок:"
-        ingredients = IngredientRecipe.objects.filter(
-            recipe__shopping_cart__user=request.user
+        qw_st = IngredientRecipe.objects.filter(
+            recipe__buy_recipe__user=request.user
         ).values(
-            'ingredient__name', 'ingredient__measurement_unit'
-        ).annotate(amount=Sum('amount'))
-        for num, i in enumerate(ingredients):
-            ingredient_list += (
-                f"\n{i['ingredient__name']} - "
-                f"{i['amount']} {i['ingredient__measurement_unit']}"
-            )
-            if num < ingredients.count() - 1:
-                ingredient_list += ', '
-        file = 'shopping_list'
-        response = HttpResponse(ingredient_list, 'Content-Type: application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{file}.pdf"'
+            'ingredient__name',
+            'ingredient__measurement_unit',).annotate(amount=Sum('amount'))
+
+        ingredient_list = 'Cписок покупок:'
+        for value in qw_st:
+            name = value['ingredient__name']
+            measurement_unit = value['ingredient__measurement_unit']
+            amount = value['amount']
+            ingredient_list += f'\n{name} - {amount} {measurement_unit}'
+        file = 'ingredient_list'
+        response = HttpResponse(
+            ingredient_list,
+            content_type='text/plain'
+        )
+        response['Content-Disposition'] = f'attachment; filename={file}.pdf'
         return response
