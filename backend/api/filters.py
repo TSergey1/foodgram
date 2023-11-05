@@ -5,15 +5,6 @@ from recipes.models import Recipe
 
 User = get_user_model()
 
-# class RecipeFilters(filters.FilterSet):
-#     """Класс фильтров полей модели Title"""
-
-#     tags = filters.CharFilter(field_name='tags__slug')
-
-#     class Meta:
-#         model = Recipe
-#         fields = ('tags', 'author')
-
 
 class RecipeFilters(filters.FilterSet):
     tags = filters.AllValuesMultipleFilter(field_name='tags__slug')
@@ -24,12 +15,12 @@ class RecipeFilters(filters.FilterSet):
 
     def filter_is_favorited(self, queryset, name, value):
         if value and not self.request.user.is_anonymous:
-            return queryset.filter(favorites__user=self.request.user)
+            return queryset.filter(in_favorites__user=self.request.user)
         return queryset
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
         if value and not self.request.user.is_anonymous:
-            return queryset.filter(cart__user=self.request.user)
+            return queryset.filter(buy_recipe__user=self.request.user)
         return queryset
 
     class Meta:
