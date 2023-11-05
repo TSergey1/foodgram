@@ -1,8 +1,11 @@
 import aspose.pdf as ap
+import mimetypes
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.http import HttpResponse
+from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser import views
+
 
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -197,7 +200,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return Response(status.HTTP_204_NO_CONTENT)
         return Response(
             {'errors': '{0}'.format(DICT_ERRORS['not_buy_recipe'])},
-            status=status.HTTP_400_BAD_REQUEST        
+            status=status.HTTP_400_BAD_REQUEST
         )
 
     @action(detail=False,
@@ -213,7 +216,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
             'ingredient__name',
             'amount',
             'ingredient__measurement_unit', )
-        print(qw_st)
         for name, amount, measurement_unit in qw_st:
             if name in download_dict:
                 download_dict[name][0] = download_dict[name][0] + amount
@@ -228,10 +230,17 @@ class RecipesViewSet(viewsets.ModelViewSet):
             )
             page.paragraphs.add(text_fragment)
         list_ingredient.save('list_ingredient.pdf')
-        response = HttpResponse(
-            list_ingredient,
-            content_type='application/pdf'
-        )
-        response['Content-Disposition'] = ('attachment; '
-                                           'filename="list_ingredient.pdf"')
+
+        filename = 'list_ingredient.pdf'
+        filepath = settings.BASE_DIR + '/filedownload/Files/' + filename
+        mime_type, _ = mimetypes.guess_type(filepath)
+        path = open(filepath, 'r')
+        response = HttpResponse(path, content_type=mime_type)
+        response['Content-Disposition'] = "attachment; filename=%s" % filename
+        # response = HttpResponse(
+        #     list_ingredient,
+        #     content_type='application/pdf'
+        # )
+        # response['Content-Disposition'] = ('attachment; '
+        #                                    'filename="list_ingredient.pdf"')
         return response

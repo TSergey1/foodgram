@@ -137,7 +137,7 @@ class RecipeGetSerializer(serializers.ModelSerializer):
                                       amount=F('recipe__amount'))
 
     def get_is_favorited(self, obj):
-        """Проверка рецепта в избранных у пользователя у пользователя."""
+        """Проверка рецепта в избранных у пользователя."""
         user = self.context.get('request').user
         if user.is_anonymous:
             return False
