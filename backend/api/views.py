@@ -3,11 +3,10 @@ from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser import views
-
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from .filters import RecipeFilters
 from .paginators import PageLimitPagination
@@ -194,8 +193,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if object_to_delete.exists():
             object_to_delete.delete()
             return Response(status.HTTP_204_NO_CONTENT)
-        return Response({'errors': '{0}'.format(DICT_ERRORS['not_buy_recipe'])},
-                        status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {'errors': '{0}'.format(DICT_ERRORS['not_buy_recipe'])},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     @action(detail=False,
             permission_classes=(IsAuthenticated,))

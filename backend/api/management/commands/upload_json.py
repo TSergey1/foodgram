@@ -20,7 +20,7 @@ class Command(BaseCommand):
         parser.add_argument('filename', default='ingredients.json', nargs='?',
                             type=str)
 
-    def handle(self,  *args, **options):
+    def handle(self, *args, **options):
         try:
             with open(os.path.join(ROOT_DATA, options['filename']), 'r') as f:
                 data = json.load(f)
@@ -35,6 +35,6 @@ class Command(BaseCommand):
                             f'Ингридиет {i["name"]} '
                             f'{i["measurement_unit"]} '
                             f'уже есть в базе'
-                         )
+                        )
         except FileNotFoundError:
             raise CommandError('Файл data отсутствует')
