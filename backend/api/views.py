@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from .filters import RecipeFilters
+from .paginators import PageLimitPagination
 from .permissions import (IsAdminOrReadOnly,
                           IsAuthorOrAdminOrReadOnly)
 from .serializers import (IngredientSerializer,
@@ -43,6 +44,8 @@ DICT_ERRORS = {
 class UserViewSet(views.UserViewSet):
     """Вьюсет для обьектов класса User."""
 
+    pagination_class = PageLimitPagination
+
     def get_permissions(self):
         """
         Переопределяем get_permissions для доступа только авторизованным
@@ -54,23 +57,25 @@ class UserViewSet(views.UserViewSet):
 
     @action(detail=False,
             url_path='subscriptions',
+            pagination_class=PageLimitPagination,
             permission_classes=(IsAuthenticated,))
     def subscriptions(self, request):
         """Реализация эндпоинта users/subscriptions/ю"""
         user = request.user
         folowing = User.objects.filter(following__user=user)
-        serializer = FollowSerializer(folowing, many=True)
-        return Response(serializer.data, status.HTTP_200_OK)
+        pages = self.paginate_queryset(folowing)
+        serializer = FollowSerializer(pages, many=True)
+        return self.get_paginated_response(serializer.data)
 
     @action(methods=['POST', 'DELETE'],
             detail=True,
             permission_classes=(IsAuthenticated,))
-    def subscribe(self, request, pk=None):
+    def subscribe(self, request, id=None):
         """
         Реализация эндпоинта users/{id}/subscribe/
         """
         user = request.user
-        following = get_object_or_404(User, pk=pk)
+        following = get_object_or_404(User, pk=id)
 
         if request.method == 'POST':
             serializer = FollowSerializer(following,
@@ -122,6 +127,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     queryset = Recipe.objects.all()
     filterset_class = RecipeFilters
+    pagination_class = PageLimitPagination
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
 
     def perform_create(self, serializer):
@@ -136,12 +142,12 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(methods=['POST', 'DELETE'],
             detail=True,
             permission_classes=(IsAuthenticated,))
-    def favorite(self, request, pk=None):
+    def favorite(self, request, id=None):
         """
         Реализация эндпоинта recipe/{id}/favorite/
         """
         user = request.user
-        in_favorites = get_object_or_404(Recipe, pk=pk)
+        in_favorites = get_object_or_404(Recipe, pk=id)
 
         if request.method == 'POST':
             serializer = RecipesShortSerializer(in_favorites,
@@ -165,12 +171,12 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(methods=['POST', 'DELETE'],
             detail=True,
             permission_classes=(IsAuthenticated,))
-    def shopping_cart(self, request, pk=None):
+    def shopping_cart(self, request, id=None):
         """
         Реализация эндпоинта recipe/{id}/shopping_cart/
         """
         user = request.user
-        add_obj = get_object_or_404(Recipe, pk=pk)
+        add_obj = get_object_or_404(Recipe, pk=id)
 
         if request.method == 'POST':
             serializer = RecipesShortSerializer(add_obj,
