@@ -13,6 +13,7 @@ from recipes.models import (Ingredient,
 
 User = get_user_model()
 
+
 class UserSerializer(serializers.ModelSerializer):
     """Сериализатор пользователя User."""
 
@@ -181,6 +182,15 @@ class RecipeSetSerializer(serializers.ModelSerializer):
                   'text',
                   'cooking_time')
 
+    def validate(self, data):
+        if not self.initial_data.get('ingredients'):
+            raise serializers.ValidationError(
+                'Должен быть хотя бы один ингридиент!')
+        elif not self.initial_data.get('tags'):
+            raise serializers.ValidationError(
+                'Должен быть хотя бы один тег!')
+        return data
+
     def get_ingredient(self, recipe, ingredients):
         for ingredient in ingredients:
             ingredient_obj = Ingredient.objects.get(id=ingredient.get('id'))
@@ -188,16 +198,6 @@ class RecipeSetSerializer(serializers.ModelSerializer):
                 ingredient=ingredient_obj,
                 recipe=recipe,
                 amount=ingredient.get('amount'))
-
-    def validate(self, data):
-        if not self.initial_data.get('ingredients'):
-            raise serializers.ValidationError(
-                'Должен быть хотя бы один ингридиент!')
-        
-        elif not self.initial_data.get('tags'):
-            raise serializers.ValidationError(
-                'Должен быть хотя бы один тег!')
-        return data
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
@@ -208,12 +208,21 @@ class RecipeSetSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        ingredients = validated_data.pop('ingredients')
-        tags = validated_data.pop('tags')
-        IngredientRecipe.objects.filter(recipe=instance).delete()
-        instance.tags.set(tags)
-        self.get_ingredient(instance, ingredients)
-        return super().update(instance, validated_data)
+        instance.image = validated_data.get('image', instance.image)
+        instance.name = validated_data.get('name', instance.name)
+        instance.text = validated_data.get('text', instance.text)
+        instance.cooking_time = validated_data.get(
+            'cooking_time', instance.cooking_time
+        )
+        instance.tags.clear()
+        tags_list = self.initial_data.get('tags')
+        instance.tags.set(tags_list)
+
+        IngredientRecipe.objects.filter(recipe=instance).all().delete()
+        ingredient_list = validated_data.get('ingredients')
+        self.get_ingredient(instance, ingredient_list)
+        instance.save()
+        return instance
 
     def to_representation(self, instance):
         request = self.context.get("request")
