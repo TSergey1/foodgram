@@ -6,4 +6,4 @@ class PageLimitPagination(PageNumberPagination):
     возможностью вывода определенного количества страниц.
     """
 
-    page_size_query_param = "limit"
+    page_size_query_param = 'limit'
