@@ -54,7 +54,6 @@ class UserViewSet(views.UserViewSet):
         return super().get_permissions()
 
     @action(detail=False,
-            url_path='subscriptions',
             pagination_class=PageLimitPagination,
             permission_classes=(IsAuthenticated,))
     def subscriptions(self, request):
@@ -65,7 +64,7 @@ class UserViewSet(views.UserViewSet):
         serializer = FollowSerializer(pages, many=True)
         return self.get_paginated_response(serializer.data)
 
-    @action(methods=['POST', 'DELETE'],
+    @action(methods=['post', 'delete'],
             detail=True,
             permission_classes=(IsAuthenticated,))
     def subscribe(self, request, id):
@@ -139,7 +138,31 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return RecipeGetSerializer
         return RecipeSetSerializer
 
-    @action(methods=['POST', 'DELETE'],
+    def add_obj(self, request, pk_obj, model_obj):
+        user = request.user
+        obj = get_object_or_404(Recipe, pk=pk_obj)
+        serializer = RecipesShortSerializer(obj,
+                                            context={'request': request})
+        if model_obj.objects.filter(user=user, recipe=obj).exists():
+            return Response(
+                {'errors': '{0}'.format(DICT_ERRORS.get('re-recipe'))},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        model_obj.objects.create(user=user, recipe=obj)
+        return Response(serializer.data, status.HTTP_201_CREATED)
+
+    def delate_obj(self, request, pk_obj, model_obj):
+        user = request.user
+        obj = get_object_or_404(Recipe, pk=pk_obj)
+        through_obj = model_obj.objects.filter(user=user,
+                                               recipe=obj)
+        if through_obj.exists():
+            through_obj.delete()
+            return Response(status.HTTP_204_NO_CONTENT)
+        return Response({'errors': '{0}'.format(DICT_ERRORS['not-recipe'])},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['post', 'delete'],
             detail=True,
             permission_classes=(IsAuthenticated,))
     def favorite(self, request, pk):
@@ -147,10 +170,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
         Реализация эндпоинта recipe/{id}/favorite/
         """
         if request.method == 'POST':
-            self.add_obj(request, pk, FavoriteRecipe)
-        self.delate_obj(request, pk, FavoriteRecipe)
+            return self.add_obj(request, pk, FavoriteRecipe)
+        return self.delate_obj(request, pk, FavoriteRecipe)
 
-    @action(methods=['POST', 'DELETE'],
+    @action(methods=['post', 'delete'],
             detail=True,
             permission_classes=(IsAuthenticated,))
     def shopping_cart(self, request, pk):
@@ -158,8 +181,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
         Реализация эндпоинта recipe/{id}/shopping_cart/
         """
         if request.method == 'POST':
-            self.add_obj(request, pk, BuyRecipe)
-        self.delate_obj(request, pk, BuyRecipe)
+            return self.add_obj(request, pk, BuyRecipe)
+        return self.delate_obj(request, pk, BuyRecipe)
 
     @action(detail=False,
             permission_classes=(IsAuthenticated,))
@@ -186,28 +209,3 @@ class RecipesViewSet(viewsets.ModelViewSet):
         )
         response['Content-Disposition'] = f'attachment; filename={file}.pdf'
         return response
-
-    def add_obj(self, request, pk_obj, model_obj):
-        user = request.user
-        obj = get_object_or_404(Recipe, pk=pk_obj)
-        if model_obj.objects.filter(user=user,
-                                    recipe=obj).exists():
-            return Response(
-                {'errors': '{0}'.format(DICT_ERRORS['re-recipe'])},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        serializer = RecipesShortSerializer(obj,
-                                            context={'request': request})
-        model_obj.objects.create(user=user, recipe=obj)
-        return Response(serializer.data, status.HTTP_201_CREATED)
-
-    def delate_obj(self, request, pk_obj, model_obj):
-        user = request.user
-        obj = get_object_or_404(Recipe, pk=pk_obj)
-        through_obj = model_obj.objects.filter(user=user,
-                                               recipe=obj)
-        if through_obj.exists():
-            through_obj.delete()
-            return Response(status.HTTP_204_NO_CONTENT)
-        return Response({'errors': '{0}'.format(DICT_ERRORS['not-recipe'])},
-                        status=status.HTTP_400_BAD_REQUEST)
