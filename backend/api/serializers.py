@@ -203,7 +203,8 @@ class RecipeSetSerializer(serializers.ModelSerializer):
         ingredients = self.initial_data.get('ingredients')
         if not ingredients:
             raise serializers.ValidationError({
-                'ingredients': '{0}'.format(DICT_ERRORS2.get('not_ingredient'))})
+                'ingredients':
+                '{0}'.format(DICT_ERRORS2.get('not_ingredient'))})
         ingredient_list = []
         for item in ingredients:
             ingredient = get_object_or_404(Ingredient,
