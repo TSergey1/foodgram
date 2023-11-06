@@ -13,7 +13,7 @@ from recipes.models import (BuyRecipe,
                             Recipe,
                             Tag)
 
-User = get_user_model() 
+User = get_user_model()
 
 
 DICT_ERRORS2 = {
