@@ -80,13 +80,14 @@ class UserViewSet(views.UserViewSet):
             if user == following:
                 return Response(
                     {'errors': '{0}'.format(
-                        DICT_ERRORS['subscribe_to_myself']
+                        DICT_ERRORS.get('subscribe_to_myself')
                     )},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             if Follow.objects.filter(user=user, following=following).exists():
                 return Response(
-                    {'errors': '{0}'.format(DICT_ERRORS['re-subscription'])},
+                    {'errors':
+                     '{0}'.format(DICT_ERRORS.get('re-subscription'))},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             Follow.objects.create(user=user, following=following)
@@ -96,7 +97,7 @@ class UserViewSet(views.UserViewSet):
             follower.delete()
             return Response(status.HTTP_204_NO_CONTENT)
         return Response(
-            {'errors': '{0}'.format(DICT_ERRORS['re-subscription'])},
+            {'errors': '{0}'.format(DICT_ERRORS.get('re-subscription'))},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -159,7 +160,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if through_obj.exists():
             through_obj.delete()
             return Response(status.HTTP_204_NO_CONTENT)
-        return Response({'errors': '{0}'.format(DICT_ERRORS['not-recipe'])},
+        return Response({'errors':
+                         '{0}'.format(DICT_ERRORS.get('not-recipe'))},
                         status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['post', 'delete'],

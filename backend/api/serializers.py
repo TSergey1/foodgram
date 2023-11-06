@@ -1,8 +1,8 @@
 import base64
-
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.db.models import F
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.relations import PrimaryKeyRelatedField
 
@@ -13,7 +13,18 @@ from recipes.models import (BuyRecipe,
                             Recipe,
                             Tag)
 
-User = get_user_model()
+User = get_user_model() 
+
+
+DICT_ERRORS2 = {
+    'not_ingredient': 'Должен быть хотя бы один ингридиент!',
+    're_ingredien': 'Ингридиенты должны быть уникальными',
+    'null_ingredien': 'Значение должно быть больше 0',
+
+
+    're-recipe': 'Рецепт уже добавлен!',
+    'not-recipe': 'Рецепт уже удален!',
+}
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -189,12 +200,25 @@ class RecipeSetSerializer(serializers.ModelSerializer):
                   'cooking_time')
 
     def validate(self, data):
-        if not self.initial_data.get('ingredients'):
-            raise serializers.ValidationError(
-                'Должен быть хотя бы один ингридиент!')
-        elif not self.initial_data.get('tags'):
-            raise serializers.ValidationError(
-                'Должен быть хотя бы один тег!')
+        ingredients = self.initial_data.get('ingredients')
+        if not ingredients:
+            raise serializers.ValidationError({
+                'ingredients': '{0}'.format(DICT_ERRORS2.get('not_ingredient'))})
+        ingredient_list = []
+        for item in ingredients:
+            ingredient = get_object_or_404(Ingredient,
+                                           id=item['id'])
+            if ingredient in ingredient_list:
+                raise serializers.ValidationError(
+                    '{0}'.format(DICT_ERRORS2.get('re_ingredien'))
+                )
+            ingredient_list.append(ingredient)
+            if int(item['amount']) < 0:
+                raise serializers.ValidationError({
+                    'ingredients':
+                    ('{0}'.format(DICT_ERRORS2.get('null_ingredien')))
+                })
+        data['ingredients'] = ingredients
         return data
 
     def get_ingredient(self, recipe, ingredients):
