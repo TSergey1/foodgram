@@ -28,17 +28,14 @@ from recipes.models import (BuyRecipe,
                             Tag)
 from users.models import Follow
 
-
 User = get_user_model()
 
 DICT_ERRORS = {
     'subscribe_to_myself': 'Нельзя подписаться на себя!',
     're-subscription': 'Вы уже подписаны на автора!',
     'not_subscription': 'Вы не подписаны на автора!',
-    're-favorite': 'Рецепт уже в избранных!',
-    'not_favorite': 'Этот рецепт не в избранных!',
-    're-buy_recipe': 'Рецепт уже в списке покупок!',
-    'not_buy_recipe': 'Этот рецепт не в списке покупок!',
+    're-recipe': 'Рецепт уже добавлен!',
+    'not-recipe': 'Рецепт уже удален!',
 }
 
 
@@ -149,27 +146,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
         """
         Реализация эндпоинта recipe/{id}/favorite/
         """
-        user = request.user
-        in_favorites = get_object_or_404(Recipe, pk=pk)
-
         if request.method == 'POST':
-            serializer = RecipesShortSerializer(in_favorites,
-                                                context={'request': request})
-            if FavoriteRecipe.objects.filter(user=user,
-                                             recipe=in_favorites).exists():
-                return Response(
-                    {'errors': '{0}'.format(DICT_ERRORS['re-favorite'])},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            FavoriteRecipe.objects.create(user=user, recipe=in_favorites)
-            return Response(serializer.data, status.HTTP_201_CREATED)
-        favorites = FavoriteRecipe.objects.filter(user=user,
-                                                  recipe=in_favorites)
-        if favorites.exists():
-            favorites.delete()
-            return Response(status.HTTP_204_NO_CONTENT)
-        return Response({'errors': '{0}'.format(DICT_ERRORS['not_favorite'])},
-                        status=status.HTTP_400_BAD_REQUEST)
+            self.add_obj(request, pk, FavoriteRecipe)
+        self.delate_obj(request, pk, FavoriteRecipe)
 
     @action(methods=['POST', 'DELETE'],
             detail=True,
@@ -178,29 +157,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
         """
         Реализация эндпоинта recipe/{id}/shopping_cart/
         """
-        user = request.user
-        add_obj = get_object_or_404(Recipe, pk=pk)
-
         if request.method == 'POST':
-            serializer = RecipesShortSerializer(add_obj,
-                                                context={'request': request})
-            if BuyRecipe.objects.filter(user=user,
-                                        recipe=add_obj).exists():
-                return Response(
-                    {'errors': '{0}'.format(DICT_ERRORS['re-buy_recipe'])},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            BuyRecipe.objects.create(user=user, recipe=add_obj)
-            return Response(serializer.data, status.HTTP_201_CREATED)
-        object_to_delete = BuyRecipe.objects.filter(user=user,
-                                                    recipe=add_obj)
-        if object_to_delete.exists():
-            object_to_delete.delete()
-            return Response(status.HTTP_204_NO_CONTENT)
-        return Response(
-            {'errors': '{0}'.format(DICT_ERRORS['not_buy_recipe'])},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+            self.add_obj(request, pk, BuyRecipe)
+        self.delate_obj(request, pk, BuyRecipe)
 
     @action(detail=False,
             permission_classes=(IsAuthenticated,))
@@ -227,3 +186,28 @@ class RecipesViewSet(viewsets.ModelViewSet):
         )
         response['Content-Disposition'] = f'attachment; filename={file}.pdf'
         return response
+
+    def add_obj(self, request, pk_obj, model_obj):
+        user = request.user
+        obj = get_object_or_404(Recipe, pk=pk_obj)
+        if model_obj.objects.filter(user=user,
+                                    recipe=obj).exists():
+            return Response(
+                {'errors': '{0}'.format(DICT_ERRORS['re-recipe'])},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        serializer = RecipesShortSerializer(obj,
+                                            context={'request': request})
+        model_obj.objects.create(user=user, recipe=obj)
+        return Response(serializer.data, status.HTTP_201_CREATED)
+
+    def delate_obj(self, request, pk_obj, model_obj):
+        user = request.user
+        obj = get_object_or_404(Recipe, pk=pk_obj)
+        through_obj = model_obj.objects.filter(user=user,
+                                               recipe=obj)
+        if through_obj.exists():
+            through_obj.delete()
+            return Response(status.HTTP_204_NO_CONTENT)
+        return Response({'errors': '{0}'.format(DICT_ERRORS['not-recipe'])},
+                        status=status.HTTP_400_BAD_REQUEST)

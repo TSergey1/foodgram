@@ -2,7 +2,12 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 
-from recipes.models import Ingredient, Recipe, Tag
+from recipes.models import (BuyRecipe,
+                            Ingredient,
+                            FavoriteRecipe,
+                            Recipe,
+                            Tag)
+from users.models import Follow
 
 User = get_user_model()
 
@@ -24,7 +29,6 @@ class IngredientAdmin(admin.ModelAdmin):
         'name',
         'measurement_unit',
     )
-    search_fields = ('name',)
     list_filter = ('name',)
 
 
@@ -33,9 +37,12 @@ class RecipeAdmin(admin.ModelAdmin):
     list_display = (
         'name',
         'author',
+        'count_favorites',
     )
-    search_fields = ('name', 'author', 'tags__slug')
-    list_filter = ('name', 'author', 'tags__slug')
+    list_filter = ('author', 'name', 'tags')
+
+    def count_favorites(self, obj):
+        return obj.favorites.count()
 
 
 @admin.register(Tag)
@@ -45,5 +52,8 @@ class TagAdmin(admin.ModelAdmin):
         'slug',
         'color',
     )
-    search_fields = ('name',)
-    list_filter = ('name',)
+
+
+admin.site.register(BuyRecipe)
+admin.site.register(FavoriteRecipe)
+admin.site.register(Follow)
