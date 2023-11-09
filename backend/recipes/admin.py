@@ -15,10 +15,20 @@ class UserAdmins(UserAdmin):
         'username',
         'email',
         'first_name',
-        'last_name'
+        'last_name',
+        'count_follow',
+        'count_recipe',
     )
     list_filter = ('username', 'email')
     search_fields = ('username',)
+
+    def count_follow(self, obj):
+        return obj.following.count()
+
+    def count_recipe(self, obj):
+        return obj.recipes.count()
+    count_follow.short_description = 'Кол-во подписчиков'
+    count_recipe.short_description = 'Кол-во рецептов'
 
 
 @admin.register(Ingredient)
@@ -41,6 +51,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
     def count_favorites(self, obj):
         return obj.favorites.count()
+    count_favorites.short_description = 'Кол-во избранных'
 
 
 @admin.register(Tag)
@@ -52,6 +63,16 @@ class TagAdmin(admin.ModelAdmin):
     )
 
 
+@admin.register(Follow)
+class FollowAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'following',
+    )
+    list_filter = ('user',)
+    search_fields = ('user',)
+
+
 admin.site.register(BuyRecipe)
 admin.site.register(FavoriteRecipe)
-admin.site.register(Follow)
+admin.site.empty_value_display = 'Не задано'
