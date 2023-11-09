@@ -48,8 +48,8 @@ class RecipesShortSerializer(serializers.ModelSerializer):
         read_only_fields = ('__all__',)
 
 
-class FollowSerializer(serializers.ModelSerializer):
-    """Сериализатор подписчиков User."""
+class ShowFollowSerializer(serializers.ModelSerializer):
+    """ Сериализатор для отображения подписок пользователя. """
 
     recipes = RecipesShortSerializer(many=True, read_only=True)
     recipes_count = serializers.SerializerMethodField()
@@ -67,24 +67,40 @@ class FollowSerializer(serializers.ModelSerializer):
                   'recipes_count')
         read_only_fields = ('__all__',)
 
-    def get_recipes_count(self, obj):
-        """Количество подписок у пользователя."""
-        return obj.recipes.count()
-
     def validate(self, data):
         user = self.context.get('request').user
         following = self.instance
-        if Follow.objects.filter(following=following, user=user).exists():
-            raise serializers.ValidationError(
-                '{0}'.format(DICT_ERRORS.get('re-subscription')),
-                status.HTTP_400_BAD_REQUEST
-            )
         if user == following:
             raise serializers.ValidationError(
                 '{0}'.format(DICT_ERRORS.get('subscribe_to_myself')),
                 status.HTTP_400_BAD_REQUEST
             )
         return data
+
+    def get_recipes_count(self, obj):
+        """Количество подписок у пользователя."""
+        return obj.recipes.count()
+
+
+class FollowSerializer(serializers.ModelSerializer):
+    """Сериализатор подписок."""
+
+    class Meta:
+        model = Follow
+        fields = ('user',
+                  'following',)
+        validators = [
+            serializers.UniqueTogetherValidator(
+                queryset=model.objects.all(),
+                fields=['user', 'following'],
+                message='{0}'.format(DICT_ERRORS.get('re-subscription'))
+            )
+        ]
+
+    def to_representation(self, instance):
+        return ShowFollowSerializer(instance.following, context={
+            'request': self.context.get('request')
+        }).data
 
 
 class TagSerializer(serializers.ModelSerializer):

@@ -19,6 +19,7 @@ from .serializers import (BuyRecipe,
                           FollowSerializer,
                           RecipeGetSerializer,
                           RecipeSetSerializer,
+                          ShowFollowSerializer,
                           TagSerializer,)
 from recipes.models import (Ingredient,
                             IngredientRecipe,
@@ -49,7 +50,7 @@ class UserViewSet(views.UserViewSet):
         user = request.user
         folowing = User.objects.filter(following__user=user)
         pages = self.paginate_queryset(folowing)
-        serializer = FollowSerializer(pages, many=True)
+        serializer = ShowFollowSerializer(pages, many=True)
         return self.get_paginated_response(serializer.data)
 
     @action(methods=['post'],
@@ -60,7 +61,8 @@ class UserViewSet(views.UserViewSet):
         Реализация эндпоинта users/{id}/subscribe/
         """
         following = get_object_or_404(User, pk=id)
-        serializer = FollowSerializer(following,
+        serializer = FollowSerializer(data={'user': request.user.id,
+                                            'following': following.id},
                                       context={'request': request})
         if serializer.is_valid():
             serializer.save()
