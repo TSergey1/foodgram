@@ -32,8 +32,8 @@ class UserSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         """Проверка подписки у пользователя."""
         user = self.context.get('request').user
-        return (user.is_anonymous
-                and Follow.objects.filter(user=user, following=obj).exists())
+        return (not (user.is_anonymous or user == obj)
+                and user.follower.filter(following=obj).exists())
 
 
 class RecipesShortSerializer(serializers.ModelSerializer):
@@ -166,13 +166,13 @@ class RecipeGetSerializer(serializers.ModelSerializer):
     def get_is_favorited(self, obj):
         """Проверка рецепта в избранных у пользователя."""
         user = self.context.get('request').user
-        return user.is_anonymous and FavoriteRecipe.objects.filter(
+        return not user.is_anonymous and FavoriteRecipe.objects.filter(
             user=user, recipe=obj).exists()
 
     def get_is_in_shopping_cart(self, obj):
         """Проверка рецепта в покупках у пользователя."""
         user = self.context.get('request').user
-        return user.is_anonymous and BuyRecipe.objects.filter(
+        return not user.is_anonymous and BuyRecipe.objects.filter(
             user=user, recipe=obj
         ).exists()
 
