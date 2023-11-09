@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 
 from recipes.models import (BuyRecipe,
@@ -7,9 +6,7 @@ from recipes.models import (BuyRecipe,
                             FavoriteRecipe,
                             Recipe,
                             Tag)
-from users.models import Follow
-
-User = get_user_model()
+from users.models import Follow, User
 
 
 @admin.register(User)
@@ -21,6 +18,7 @@ class UserAdmins(UserAdmin):
         'last_name'
     )
     list_filter = ('username', 'email')
+    search_fields = ('username',)
 
 
 @admin.register(Ingredient)

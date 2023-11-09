@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from foodgram.settings import CONST
+from foodgram.constants import CONST
 from .validators import validate_username
 
 
@@ -51,15 +51,11 @@ class Follow(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name='follower'
     )
     following = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name='following'
     )
 
@@ -72,3 +68,6 @@ class Follow(models.Model):
                 name='unique_user_following'
             )
         ]
+
+    def __str__(self):
+        return f'{self.user} {self.following}'

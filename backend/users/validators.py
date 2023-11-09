@@ -1,8 +1,7 @@
 import re
 from rest_framework.exceptions import ValidationError
 
-
-from foodgram.settings import CONST
+from foodgram.constants import DICT_ERRORS
 
 
 def validate_username(value):
@@ -12,7 +11,8 @@ def validate_username(value):
         raise ValidationError(
             f'Cимвол {result} использовать запрещено.'
         )
-    if value.lower() == CONST['forbidden_username']:
+    if value.lower() == DICT_ERRORS['forbidden_username']:
         raise ValidationError(
-            f'Использовать имя {CONST["forbidden_username"]} запрещено.'
+            (f'Использовать имя'
+             f'{DICT_ERRORS.get("forbidden_username")} запрещено.')
         )

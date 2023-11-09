@@ -1,11 +1,9 @@
-from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from foodgram.settings import CONST
-
-
-User = get_user_model()
+from foodgram.constants import CONST, DICT_ERRORS
+from recipes.validators import validate_color
+from users.models import User
 
 
 class BaseModel(models.Model):
@@ -30,19 +28,18 @@ class Tag(models.Model):
         verbose_name='Название'
     )
     color = models.CharField(
-        null=True,
         max_length=CONST['max_legth_color'],
         unique=True,
+        validators=[validate_color,],
         verbose_name='Цвет в HEX'
     )
     slug = models.SlugField(
-        verbose_name='Описание',
-        null=True,
+        verbose_name='Слаг',
         unique=True
     )
 
     class Meta:
-        ordering = ('id',)
+        ordering = ('name',)
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
 
@@ -63,6 +60,13 @@ class Ingredient(BaseModel):
         verbose_name = 'Ингридиент'
         verbose_name_plural = 'Ингридиенты'
 
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'measurement_unit'],
+                name='unique_name_measurement_unit'
+            )
+        ]
+
     def __str__(self):
         return self.name
 
@@ -76,8 +80,7 @@ class Recipe(BaseModel):
 
     author = models.ForeignKey(
         User,
-        null=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         verbose_name='Автор рецепта'
     )
     tags = models.ManyToManyField(
@@ -98,7 +101,13 @@ class Recipe(BaseModel):
     )
     cooking_time = models.PositiveIntegerField(
         verbose_name='Время приготовления',
-        validators=[MinValueValidator(1), ],
+        validators=[MinValueValidator(
+            1,
+            message='{0}'.format(DICT_ERRORS.get('time_min'))
+        ), MaxValueValidator(
+            2000,
+            message='{0}'.format(DICT_ERRORS.get('time_max'))
+        )],
         help_text='Введите время приготовления в минутах'
     )
     pub_date = models.DateTimeField(
@@ -138,7 +147,13 @@ class IngredientRecipe(models.Model):
     )
     amount = models.PositiveIntegerField(
         verbose_name='Количество',
-        validators=[MinValueValidator(1), ],
+        validators=[MinValueValidator(
+            1,
+            message='{0}'.format(DICT_ERRORS.get('amount_min'))
+        ), MaxValueValidator(
+            10000,
+            message='{0}'.format(DICT_ERRORS.get('amount_man'))
+        )],
     )
 
     class Meta:
