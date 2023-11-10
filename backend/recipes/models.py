@@ -30,7 +30,7 @@ class Tag(models.Model):
     color = models.CharField(
         max_length=CONST['max_legth_color'],
         unique=True,
-        validators=[validate_color,],
+        validators=[validate_color, ],
         verbose_name='Цвет в HEX'
     )
     slug = models.SlugField(
