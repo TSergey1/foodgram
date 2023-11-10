@@ -204,7 +204,6 @@ class RecipeSetSerializer(serializers.ModelSerializer):
 
     tags = PrimaryKeyRelatedField(queryset=Tag.objects.all(),
                                   many=True,)
-    # author = UserSerializer(read_only=True)
     image = Base64ImageField()
     ingredients = IngredientRecipeSerializer(many=True)
 
@@ -266,14 +265,12 @@ class RecipeSetSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         instance.image = validated_data.get('image', instance.image)
-        # instance.author = self.context.get('request').user
         instance.tags.clear()
         tags_list = self.initial_data.get('tags')
         instance.tags.set(tags_list)
         IngredientRecipe.objects.filter(recipe=instance).all().delete()
         ingredient_list = validated_data.pop('ingredients')
         self.get_ingredient(instance, ingredient_list)
-        # instance.save()
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
