@@ -1,7 +1,6 @@
 import base64
 from django.core.files.base import ContentFile
 from django.db.models import F
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
 from rest_framework.relations import PrimaryKeyRelatedField
 
@@ -67,19 +66,20 @@ class ShowFollowSerializer(serializers.ModelSerializer):
                   'recipes_count')
         read_only_fields = ('__all__',)
 
-    def validate(self, data):
-        user = self.context.get('request').user
-        following = self.instance
-        if user == following:
-            raise serializers.ValidationError(
-                '{0}'.format(DICT_ERRORS.get('subscribe_to_myself')),
-                status.HTTP_400_BAD_REQUEST
-            )
-        return data
-
     def get_recipes_count(self, obj):
         """Количество подписок у пользователя."""
         return obj.recipes.count()
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        request = self.root.context.get('request')
+        if request is not None:
+            count = request.query_params.get('recipes_limit')
+        else:
+            count = self.root.context.get('recipes_limit')
+        if count is not None:
+            rep['recipes'] = rep['recipes'][:int(count)]
+        return rep
 
 
 class FollowSerializer(serializers.ModelSerializer):
@@ -91,11 +91,21 @@ class FollowSerializer(serializers.ModelSerializer):
                   'following',)
         validators = [
             serializers.UniqueTogetherValidator(
-                queryset=model.objects.all(),
+                queryset=Follow.objects.all(),
                 fields=['user', 'following'],
                 message='{0}'.format(DICT_ERRORS.get('re-subscription'))
             )
         ]
+
+    def validate(self, data):
+        user = self.context.get('request').user
+        following = self.instance
+        if user == following:
+            raise serializers.ValidationError(
+                '{0}'.format(DICT_ERRORS.get('subscribe_to_myself')),
+                status.HTTP_400_BAD_REQUEST
+            )
+        return data
 
     def to_representation(self, instance):
         return ShowFollowSerializer(instance.following, context={
@@ -220,10 +230,16 @@ class RecipeSetSerializer(serializers.ModelSerializer):
         read_only_fields = ('author',)
 
     def validate(self, data):
-        if not self.initial_data.get('tags'):
+        tags = self.initial_data.get('tags')
+        if not tags:
             raise serializers.ValidationError(
                 '{0}'.format(DICT_ERRORS.get('not-tag'))
             )
+        if len(tags) != len(set(tags)):
+            raise serializers.ValidationError(
+                '{0}'.format(DICT_ERRORS.get('tags_not_unique'))
+            )
+
         ingredients = self.initial_data.get('ingredients')
         if not ingredients:
             raise serializers.ValidationError({
@@ -231,14 +247,18 @@ class RecipeSetSerializer(serializers.ModelSerializer):
                 '{0}'.format(DICT_ERRORS.get('not_ingredient'))})
         ingredient_list = []
         for item in ingredients:
-            ingredient = get_object_or_404(Ingredient,
-                                           id=item['id'])
+            try:
+                ingredient = Ingredient.objects.get(pk=item['id'])
+            except Ingredient.DoesNotExist:
+                raise serializers.ValidationError(
+                    '{0}'.format(DICT_ERRORS.get('not_in-db_ingredient'))
+                )
             if ingredient in ingredient_list:
                 raise serializers.ValidationError(
                     '{0}'.format(DICT_ERRORS.get('re_ingredient'))
                 )
             ingredient_list.append(ingredient)
-            if int(item['amount']) < 0:
+            if int(item['amount']) < 1:
                 raise serializers.ValidationError({
                     'ingredients':
                     ('{0}'.format(DICT_ERRORS.get('null_ingredient')))

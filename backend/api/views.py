@@ -7,6 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
+from foodgram.constants import DICT_ERRORS
 from .filters import IngredientFilter, RecipeFilters
 from .paginators import PageLimitPagination
 from .permissions import (IsAdminOrReadOnly,
@@ -50,23 +51,35 @@ class UserViewSet(views.UserViewSet):
         user = request.user
         folowing = User.objects.filter(following__user=user)
         pages = self.paginate_queryset(folowing)
-        serializer = ShowFollowSerializer(pages, many=True)
+        serializer = ShowFollowSerializer(
+            pages,
+            context={
+                'recipes_limit': request.query_params.get('recipes_limit')
+            },
+            many=True
+        )
         return self.get_paginated_response(serializer.data)
 
     @action(methods=['post'],
             detail=True,
+            pagination_class=PageLimitPagination,
             permission_classes=(IsAuthenticated,))
     def subscribe(self, request, id):
         """
         Реализация эндпоинта users/{id}/subscribe/
         """
         following = get_object_or_404(User, pk=id)
-        serializer = FollowSerializer(data={'user': request.user.id,
-                                            'following': following.id},
-                                      context={'request': request})
+        serializer = FollowSerializer(
+            data={'user': request.user.id, 'following': following.id},
+            context={
+                'request': request,
+                'recipes_limit': request.query_params.get('recipes_limit')
+            }
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status.HTTP_201_CREATED)
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
     @subscribe.mapping.delete
     def delete_subscribe(self, request, id):
@@ -116,13 +129,18 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status.HTTP_201_CREATED)
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
     def delate_obj(self, request, pk, model_name):
         recipe = get_object_or_404(Recipe, pk=pk)
-        get_object_or_404(model_name,
-                          user=request.user,
-                          recipe=recipe).delete()
-        return Response(status.HTTP_204_NO_CONTENT)
+        through_obj = model_name.objects.filter(user=request.user,
+                                                recipe=recipe)
+        if through_obj.exists():
+            through_obj.delete()
+            return Response(status.HTTP_204_NO_CONTENT)
+        return Response({'errors':
+                         '{0}'.format(DICT_ERRORS.get('not-recipe'))},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['post'],
             detail=True,
