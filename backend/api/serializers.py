@@ -98,9 +98,7 @@ class FollowSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
-        user = self.context.get('request').user
-        following = self.instance
-        if user == following:
+        if data.get('user') == data.get('following'):
             raise serializers.ValidationError(
                 '{0}'.format(DICT_ERRORS.get('subscribe_to_myself')),
                 status.HTTP_400_BAD_REQUEST
