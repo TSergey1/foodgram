@@ -107,6 +107,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """Вьюсет для обьектов класса Ingredient."""
 
     queryset = Ingredient.objects.all()
+    http_method_names = ['get', 'post', 'patch', 'delete']
     serializer_class = IngredientSerializer
     filter_backends = (IngredientFilter,)
     search_fields = ('^name', )
