@@ -1,5 +1,5 @@
 import re
-from rest_framework.exceptions import ValidationError
+from django.core.exceptions import ValidationError
 
 from foodgram.constants import DICT_ERRORS
 

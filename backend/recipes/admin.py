@@ -1,4 +1,3 @@
-from django import forms
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
@@ -7,20 +6,7 @@ from recipes.models import (BuyRecipe,
                             FavoriteRecipe,
                             Recipe,
                             Tag)
-from recipes.validators import validate_color
 from users.models import Follow, User
-
-
-class TagForm(forms.ModelForm):
-    class Meta:
-        model = Tag
-
-    def clean(self):
-        cleaned_data = super(Tag, self).clean()
-        color = cleaned_data.get('color')
-        if color:
-            validate_color(color)
-        return cleaned_data
 
 
 @admin.register(User)
@@ -75,7 +61,6 @@ class TagAdmin(admin.ModelAdmin):
         'slug',
         'color',
     )
-    form = TagForm
 
 
 @admin.register(Follow)
