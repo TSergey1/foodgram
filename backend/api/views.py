@@ -4,8 +4,9 @@ from django.shortcuts import get_object_or_404
 from djoser import views
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.serializers import ValidationError
 
 from foodgram.constants import DICT_ERRORS
 from .filters import IngredientFilter, RecipeFilters
@@ -83,7 +84,12 @@ class UserViewSet(views.UserViewSet):
 
     @subscribe.mapping.delete
     def delete_subscribe(self, request, id):
-        following = get_object_or_404(User, pk=id)
+        try:
+            following = User.objects.get(pk=id)
+        except User.DoesNotExist:
+            raise ValidationError(
+                '{0}'.format(DICT_ERRORS.get('subscription_not_exist'))
+            )
         get_object_or_404(Follow,
                           user=request.user,
                           following=following).delete()
@@ -122,7 +128,12 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return RecipeSetSerializer
 
     def add_obj(self, request, pk, serializers_name):
-        recipe = get_object_or_404(Recipe, pk=pk)
+        try:
+            recipe = Recipe.objects.get(pk=pk)
+        except Recipe.DoesNotExist:
+            raise ValidationError(
+                '{0}'.format(DICT_ERRORS.get('recipe_not_exist'))
+            )
         serializer = serializers_name(data={'recipe': recipe.id,
                                             'user': request.user.id},
                                       context={'request': request})
