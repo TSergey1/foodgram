@@ -7,6 +7,7 @@ from recipes.models import (BuyRecipe,
                             FavoriteRecipe,
                             Recipe,
                             Tag)
+from recipes.validators import validate_color
 from users.models import Follow, User
 
 
@@ -16,8 +17,9 @@ class TagForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super(Tag, self).clean()
-        # if cleaned_data.get('color'):
-        #     raise ValidationError(u'Нужно выбрать что-то одно')
+        color = cleaned_data.get('color')
+        if color:
+            validate_color(color)
         return cleaned_data
 
 
