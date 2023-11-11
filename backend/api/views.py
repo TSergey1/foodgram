@@ -84,16 +84,15 @@ class UserViewSet(views.UserViewSet):
 
     @subscribe.mapping.delete
     def delete_subscribe(self, request, id):
-        try:
-            following = User.objects.get(pk=id)
-        except User.DoesNotExist:
-            raise ValidationError(
-                '{0}'.format(DICT_ERRORS.get('subscription_not_exist'))
-            )
-        get_object_or_404(Follow,
-                          user=request.user,
-                          following=following).delete()
-        return Response(status.HTTP_204_NO_CONTENT)
+        following = get_object_or_404(User, pk=id)
+        through_following = Follow.objects.filter(user=request.user,
+                                                  following=following)
+        if through_following.exists():
+            through_following.delete()
+            return Response(status.HTTP_204_NO_CONTENT)
+        return Response({'errors':
+                         '{0}'.format(DICT_ERRORS.get('not_subscription'))},
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
