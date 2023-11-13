@@ -2,6 +2,7 @@ import base64
 from django.core.files.base import ContentFile
 from django.db.models import F
 from rest_framework import serializers, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.relations import PrimaryKeyRelatedField
 
 from foodgram.constants import DICT_ERRORS
@@ -99,7 +100,7 @@ class FollowSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if data.get('user') == data.get('following'):
-            raise serializers.ValidationError(
+            raise ValidationError(
                 '{0}'.format(DICT_ERRORS.get('subscribe_to_myself')),
                 status.HTTP_400_BAD_REQUEST
             )
@@ -196,24 +197,31 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
         fields = ('id',
                   'amount',)
 
-    def get_amount(self, value):
+    def validate_amount(self, value):
         if value <= 0:
-            raise serializers.ValidationError({
+            raise serializers.ValidationError(
                 '{0}'.format(DICT_ERRORS.get('amount_min'))
-            })
+            )
         elif value > 10000:
-            raise serializers.ValidationError({
-                '{0}'.format(DICT_ERRORS.get('amount_man'))
-            })
+            raise serializers.ValidationError(
+                '{0}'.format(DICT_ERRORS.get('amount_max'))
+            )
+        return value
 
 
 class RecipeSetSerializer(serializers.ModelSerializer):
     """Сериализатор Recipe для POST, PATCH запросов."""
 
-    tags = PrimaryKeyRelatedField(queryset=Tag.objects.all(),
-                                  many=True,)
+    tags = PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        error_messages={
+            'does_not_exist': '{0}'.format(DICT_ERRORS.get('tags_not_exist'))
+        },
+        many=True
+    )
     image = Base64ImageField()
     ingredients = IngredientRecipeSerializer(many=True)
+    cooking_time = serializers.IntegerField()
 
     class Meta:
         model = Recipe
@@ -226,6 +234,17 @@ class RecipeSetSerializer(serializers.ModelSerializer):
                   'text',
                   'cooking_time')
         read_only_fields = ('author',)
+
+    def validate_cooking_time(self, value):
+        if value <= 0:
+            raise serializers.ValidationError(
+                '{0}'.format(DICT_ERRORS.get('time_min'))
+            )
+        elif value > 2000:
+            raise serializers.ValidationError(
+                '{0}'.format(DICT_ERRORS.get('time_max'))
+            )
+        return value
 
     def validate(self, data):
         tags = self.initial_data.get('tags')
@@ -264,13 +283,16 @@ class RecipeSetSerializer(serializers.ModelSerializer):
         data['ingredients'] = ingredients
         return data
 
-    def get_ingredient(self, recipe, ingredients):
+    @staticmethod
+    def get_ingredient(recipe, ingredients):
+        ingredients_obj = []
         for ingredient in ingredients:
-            ingredient_obj = Ingredient.objects.get(id=ingredient.get('id'))
-            IngredientRecipe.objects.create(
-                ingredient=ingredient_obj,
-                recipe=recipe,
-                amount=ingredient.get('amount'))
+            ingredients_obj.append(IngredientRecipe(
+                ingredient=ingredient.pop('id'),
+                amount=ingredient.pop('amount'),
+                recipe=recipe)
+            )
+        IngredientRecipe.objects.bulk_create(ingredients_obj)
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')

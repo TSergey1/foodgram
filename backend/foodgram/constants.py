@@ -25,5 +25,6 @@ DICT_ERRORS = {
     'Поле должно содержать HEX-код цвета в формате #RRGGBB',
     'forbidden_username': 'me',
     're_username': 'Вы уже подписаны',
-    'tags_not_unique': 'Теги должны быть уникальны'
+    'tags_not_unique': 'Теги должны быть уникальны',
+    'tags_not_exist': 'Указанного тега не существует',
 }

@@ -152,7 +152,7 @@ class IngredientRecipe(models.Model):
             message='{0}'.format(DICT_ERRORS.get('amount_min'))
         ), MaxValueValidator(
             10000,
-            message='{0}'.format(DICT_ERRORS.get('amount_man'))
+            message='{0}'.format(DICT_ERRORS.get('amount_max'))
         )],
     )
 

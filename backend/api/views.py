@@ -4,9 +4,10 @@ from django.shortcuts import get_object_or_404
 from djoser import views
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.serializers import ValidationError
+
 
 from foodgram.constants import DICT_ERRORS
 from .filters import IngredientFilter, RecipeFilters
@@ -127,7 +128,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return RecipeGetSerializer
         return RecipeSetSerializer
 
-    def add_obj(self, request, pk, serializers_name):
+    @staticmethod
+    def add_obj(request, pk, serializers_name):
         try:
             recipe = Recipe.objects.get(pk=pk)
         except Recipe.DoesNotExist:
@@ -142,7 +144,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status.HTTP_201_CREATED)
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
-    def delate_obj(self, request, pk, model_name):
+    @staticmethod
+    def delate_obj(request, pk, model_name):
         recipe = get_object_or_404(Recipe, pk=pk)
         through_obj = model_name.objects.filter(user=request.user,
                                                 recipe=recipe)
