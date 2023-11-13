@@ -287,10 +287,13 @@ class RecipeSetSerializer(serializers.ModelSerializer):
     def get_ingredient(recipe, ingredients):
         ingredients_obj = []
         for ingredient in ingredients:
-            ingredients_obj.append(IngredientRecipe(
-                ingredient=ingredient.pop('id'),
-                amount=ingredient.pop('amount'),
-                recipe=recipe)
+            ingredient_obj = Ingredient.objects.get(id=ingredient.get('id'))
+            ingredients_obj.append(
+                IngredientRecipe(
+                    ingredient=ingredient_obj,
+                    amount=ingredient.get('amount'),
+                    recipe=recipe
+                )
             )
         IngredientRecipe.objects.bulk_create(ingredients_obj)
 
