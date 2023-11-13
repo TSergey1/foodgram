@@ -78,10 +78,9 @@ class UserViewSet(views.UserViewSet):
                 'recipes_limit': request.query_params.get('recipes_limit')
             }
         )
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status.HTTP_201_CREATED)
-        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status.HTTP_201_CREATED)
 
     @subscribe.mapping.delete
     def delete_subscribe(self, request, id):
@@ -139,10 +138,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
         serializer = serializers_name(data={'recipe': recipe.id,
                                             'user': request.user.id},
                                       context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status.HTTP_201_CREATED)
-        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status.HTTP_201_CREATED)
 
     @staticmethod
     def delate_obj(request, pk, model_name):
