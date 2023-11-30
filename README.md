@@ -1,16 +1,21 @@
-# Проект Foodgram
+# Блог рецептов Recipe-blog
 
-## kittygram_domain: https://foodgram-ok.ddns.net
+[![License MIT](https://img.shields.io/badge/licence-MIT-green)](https://opensource.org/license/mit/)
+[![Python versions](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C3.11-blue)](#)
+[![Django versions](https://img.shields.io/badge/Django-3.2-blue?logo=django)](#)
+[![Nginx version](https://img.shields.io/badge/Nginx-1.22-blue?logo=nginx)](#)
+[![Postgres version](https://img.shields.io/badge/PSQL-13-blue?logo=postgresql)](#)
+[![Main foodgram workflow](https://github.com/TSergey1/recipe_blog/actions/workflows/main.yml/badge.svg)](https://github.com/TSergey1/recipe_blog/actions/workflows/main.yml)
 
-Foodgram реализован для публикации рецептов. Авторизованные пользователи
-могут подписываться на понравившихся авторов, добавлять рецепты в избранное,
-в покупки, скачать список покупок ингредиентов для добавленных в покупки
-рецептов.
+
+## Recipe-blog domain: https://Recipe-blog-ok.ddns.net
+
+Recipe-blog -  сайт, на котором пользователи публикуют рецепты, добавляют чужие рецепты в избранное и подписываются на публикации других авторов. Пользователям сайта также доступен сервис «Список покупок». Он позволяет создавать список продуктов, которые нужно купить для приготовления выбранных блюд.
 
 ## Подготовка и запуск проекта
 ### Склонировать репозиторий на локальную машину:
 ```
-git clone git@github.com:TSergey1/foodgram-project-react.git
+git clone git@github.com:TSergey1/recipe_blog.git
 ```
 ## Для работы с удаленным сервером (на ubuntu):
 * Выполните вход на свой удаленный сервер
@@ -25,7 +30,7 @@ sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-
 sudo chmod +x /usr/local/bin/docker-compose
 ```
 * Локально отредактируйте файл infra/nginx.conf и в строке server_name впишите свой IP
-* Скопируйте файлы docker-compose.yml и nginx.conf из директории infra на сервер:
+* Скопируйте файлы docker-compose.production.yml и nginx.conf из директории infra на сервер:
 ```
 scp docker-compose.yml <username>@<host>:/home/<username>/docker-compose.yml
 scp nginx.conf <username>@<host>:/home/<username>/nginx.conf
@@ -62,7 +67,7 @@ scp nginx.conf <username>@<host>:/home/<username>/nginx.conf
      - Проверка кода на соответствие PEP8
      - Сборка и публикация образа бекенда на DockerHub.
      - Автоматический деплой на удаленный сервер.
-     - Отправка уведомления в телеграм-чат.  
+
   
 * На сервере соберите docker-compose:
 ```
@@ -89,4 +94,4 @@ sudo docker-compose up -d --build
     - Проект будет доступен по вашему IP
 
 ## Проект в интернете
-Проект запущен и доступен по [адресу](https://foodgram-ok.ddns.net/recipes)
+Проект запущен и доступен по [адресу](https://recipe-blog-ok.ddns.net/recipes)
