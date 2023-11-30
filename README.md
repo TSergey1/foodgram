@@ -1,21 +1,21 @@
-# Блог рецептов Recipe-blog
+# Блог рецептов Foodgram
 
 [![License MIT](https://img.shields.io/badge/licence-MIT-green)](https://opensource.org/license/mit/)
 [![Python versions](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C3.11-blue)](#)
 [![Django versions](https://img.shields.io/badge/Django-3.2-blue?logo=django)](#)
 [![Nginx version](https://img.shields.io/badge/Nginx-1.22-blue?logo=nginx)](#)
 [![Postgres version](https://img.shields.io/badge/PSQL-13-blue?logo=postgresql)](#)
-[![Main foodgram workflow](https://github.com/TSergey1/recipe_blog/actions/workflows/main.yml/badge.svg)](https://github.com/TSergey1/recipe_blog/actions/workflows/main.yml)
+[![Main foodgram workflow](https://github.com/TSergey1/foodgram/actions/workflows/main.yml/badge.svg)](https://github.com/TSergey1/foodgram/actions/)
 
 
-## Recipe-blog domain: https://Recipe-blog-ok.ddns.net
+## Foodgram domain: https://foodgram-ok.ddns.net/recipes
 
-Recipe-blog -  сайт, на котором пользователи публикуют рецепты, добавляют чужие рецепты в избранное и подписываются на публикации других авторов. Пользователям сайта также доступен сервис «Список покупок». Он позволяет создавать список продуктов, которые нужно купить для приготовления выбранных блюд.
+Foodgram -  сайт, на котором пользователи публикуют рецепты, добавляют чужие рецепты в избранное и подписываются на публикации других авторов. Пользователям сайта также доступен сервис «Список покупок». Он позволяет создавать список продуктов, которые нужно купить для приготовления выбранных блюд.
 
 ## Подготовка и запуск проекта
 ### Склонировать репозиторий на локальную машину:
 ```
-git clone git@github.com:TSergey1/recipe_blog.git
+git clone git@github.com:TSergey1/foodgram.git
 ```
 ## Для работы с удаленным сервером (на ubuntu):
 * Выполните вход на свой удаленный сервер
@@ -94,4 +94,4 @@ sudo docker-compose up -d --build
     - Проект будет доступен по вашему IP
 
 ## Проект в интернете
-Проект запущен и доступен по [адресу](https://recipe-blog-ok.ddns.net/recipes)
+Проект запущен и доступен по [адресу](https://foodgram-ok.ddns.net/recipes)
