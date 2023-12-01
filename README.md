@@ -12,7 +12,7 @@
 [![Yandex.Cloud](https://img.shields.io/badge/-Yandex.Cloud-464646?style=flat-square&logo=Yandex.Cloud)](https://cloud.yandex.ru/)
 
 
-## FoodGram domain: https://foodgram-ok.ddns.net/recipes
+# FoodGram domain: https://foodgram-ok.ddns.net/recipes
 
 # Описание
 
