@@ -15,8 +15,8 @@
 ## FoodGram domain: https://foodgram-ok.ddns.net/recipes
 
 FoodGram - сайт, на котором пользователи публикуют рецепты, добавляют чужие рецепты в избранное и подписываются на публикации других авторов. Пользователям сайта также доступен сервис «Список покупок». Он позволяет создавать список продуктов, которые нужно купить для приготовления выбранных блюд.
-
-![Pic](https://github.com/TSergey1/foodgram/blob/main/.github/recipe.png?raw=true "Pic")
+       
+![Pic](https://github.com/TSergey1/foodgram/blob/master/.github/recipe.png?raw=true "Pic")
 
 
 ## Подготовка и запуск проекта
